@@ -1,0 +1,136 @@
+---
+title: "project code"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# echo=FALSE will stop the code chunk from appearing in the knit document
+# warning=FALSE and message=FALSE will stop R messages from appearing in the knit document
+library(tidyverse)
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Load the TPS break in data
+break_and_enters <- read_csv("break_and_enters.csv")
+```
+
+
+
+QUESTION: In neighborhoods with high B&E rates, what are the commonalities between the crimes?
+SUBQUESTIONS: 
+Specifically, are particular premise types more susceptible to B&E’s? 
+Is there a particular day of the week or hour of the day that inhabitants should be more wary of B&E’s? 
+Is there a certain kind of B&E that occurs more often in these high-rate neighborhoods?
+
+#create a new variable that represents the proportion of all reported B&E's that occurred in this neighbourhood.
+```{r}
+grouped_hood <- break_and_enters %>% 
+  filter(!is.na(Neighbourhood)) %>%
+  group_by(Neighbourhood) %>%
+  mutate(number = n()) %>%
+  mutate(prop = number/43302)
+break_and_enters_prop <- merge(break_and_enters,grouped_hood,by=c("X1", "Index", "event_unique_id", "occurrencedate", "reporteddate", "premisetype", "offence", "reportedyear", "reportedmonth", "reportedday", "reporteddayofyear", "reporteddayofweek", "reportedhour", "occurrenceyear", "occurrencemonth", "occurrenceday", "occurrencedayofyear", "occurrencedayofweek", "occurrencehour", "MCI", "Division", "Hood_ID", "Long", "Lat"))
+```
+ 
+```{r}
+ggplot(break_and_enters_prop,
+aes(x = "", y=prop)) +
+geom_boxplot()
+break_and_enters_prop %>%
+summarise(n=n(),
+Q1=quantile(prop, 0.25),
+med=median(prop),
+mean=mean(prop),
+Q3=quantile(prop, 0.75),
+max=max(prop))
+```
+
+We can now compare neighborhoods with "high" B&E rates and "low" B&E rates.
+
+```{r}
+b_and_e_top <- break_and_enters_prop %>%
+  filter(prop >= 0.01457208)
+b_and_e_lower <- break_and_enters_prop %>%
+  filter(prop <= 0.005565563)
+b_and_e_extremes <- rbind(b_and_e_top, b_and_e_lower)
+b_and_e_extremes <- b_and_e_extremes %>% mutate(level = ifelse(prop >= 0.01457208, "high", "low"))
+
+```
+
+(this restricts us to 21812 observations)
+
+Now to answer the subquestions:
+Are particular premise types more susceptible to B&E’s? (Comparing high and low rate neighborhoods)
+
+```{r}
+grouped_premise_high <- b_and_e_top %>%
+  group_by(premisetype)
+grouped_premise_high %>%
+  summarise(n = n(), prop_premise = n/10394)
+grouped_premise_low <- b_and_e_lower %>%
+  group_by(premisetype)
+grouped_premise_low %>%
+  summarise(n = n(), prop_premise = n/11418)
+```
+Hmm, interesting. For all of low-rate neighborhoods, Houses are more broken into, then apartments, then stores. In top neighbourhoods, however, the order is commercial, apartment, then house!
+Quick little p-test to ensure that this difference is significant (testing commercial percentages)
+```{r}
+set.seed(100)
+b_and_e_extremes %>% group_by(level) %>%
+summarise(n=n(),
+n_commercial = sum(premisetype=="Commercial"),
+prop_commercial = n_commercial / n)
+prop_data <- b_and_e_extremes %>% group_by(level) %>%
+summarise(n_commercial = sum(premisetype=="Commercial"),
+n=n(),
+prop_commercial = n_commercial / n)
+test_stat <- prop_data %>%
+summarise(test_stat = diff(prop_commercial)) %>%
+as.numeric()
+test_stat
+repetitions <- 1000; # number of repetitions (i.e. possible groupings)
+simulated_values <- rep(NA, repetitions); # empty vector for sim. values
+for(i in 1:repetitions){
+simdata <- b_and_e_extremes %>%
+mutate(level = sample(level)) %>%
+group_by(level) %>%
+summarise(n=n(),
+n_commercial = sum(premisetype=="Commercial"),
+prop_commercial = n_commercial / n)
+sim_prop_diff <- simdata %>% summarise(value = diff(prop_commercial))
+simulated_values[i] <- as.numeric(sim_prop_diff)
+}
+sim <- tibble(prop_diff = simulated_values)
+ggplot(sim, aes(x=prop_diff)) +
+geom_histogram(binwidth = 0.005, fill="gray", color="black") +
+labs(x = "Difference in proportion of commercial breakins for
+low
+and high B&E rate neighborhoods, assuming no difference between
+groups") + 
+  geom_vline(xintercept=c(test_stat, -test_stat), color="red")
+sim %>% filter(prop_diff >= abs(test_stat) | prop_diff <= -
+abs(test_stat)) %>%
+summarise(pvalue = n() / repetitions)
+```
+Given the low p value of p < 0.0001, we can conclude that there is strong evidence against the null that states that p_commercial is the same in high and low rate neighborhoods. Therefore, we have reason to believe that the proportion of commercial breakins in these high-rate neighborhoods is different than low-rate neighborhoods. 
+Linear regression: 
+```{r}
+b_and_e_top <- b_and_e_top %>% mutate(residential = ifelse(premisetype == "House" | premisetype == "Apartment", "Yes", "No")) 
+ggplot(b_and_e_top, aes(x=residential, y=prop)) +
+geom_boxplot() + theme_bw()
+summary(lm(number ~ residential, data=b_and_e_top))$coefficients
+
+```
+The regression equation is:
+Prop = B0 + BI(premise is residential) + error
+We are interested in testing
+H0 : B1 = 0
+vs
+HA : B1 != 0
+
+Based on the fitted regression model, the p-value corresponding to this hypothesis test is very small (the
+estimated p-value from R is 0.001258903), so we have very strong evidence to reject the null hypothesis and
+conclude that there is an association between a property being residential and proportion of neighborhood breakins.
