@@ -1,0 +1,61 @@
+
+Is there a certain kind of B&E that occurs more often in these high-rate neighborhoods?
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# echo=FALSE will stop the code chunk from appearing in the knit document
+# warning=FALSE and message=FALSE will stop R messages from appearing in the knit document
+library(tidyverse)
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Load the TPS break in data
+break_and_enters <- read_csv("break_and_enters.csv")
+```
+
+#create a new variable that represents the proportion of all reported B&E's that occurred in this neighbourhood.
+```{r}
+grouped_hood <- break_and_enters %>% 
+  filter(!is.na(Neighbourhood)) %>%
+  group_by(Neighbourhood) %>%
+  mutate(number = n()) %>%
+  mutate(prop = number/43302)
+break_and_enters_prop <- merge(break_and_enters,grouped_hood,by=c("X1", "Index", "event_unique_id", "occurrencedate", "reporteddate", "premisetype", "offence", "reportedyear", "reportedmonth", "reportedday", "reporteddayofyear", "reporteddayofweek", "reportedhour", "occurrenceyear", "occurrencemonth", "occurrenceday", "occurrencedayofyear", "occurrencedayofweek", "occurrencehour", "MCI", "Division", "Hood_ID", "Long", "Lat"))
+```
+ 
+```{r}
+ggplot(break_and_enters_prop,
+aes(x = "", y=prop)) +
+geom_boxplot()
+break_and_enters_prop %>%
+summarise(n=n(),
+Q1=quantile(prop, 0.25),
+med=median(prop),
+mean=mean(prop),
+Q3=quantile(prop, 0.75),
+max=max(prop))
+```
+
+```{r}
+b_and_e_top <- break_and_enters_prop %>%
+  filter(prop >= 0.01457208)
+b_and_e_lower <- break_and_enters_prop %>%
+  filter(prop <= 0.005565563)
+b_and_e_extremes <- rbind(b_and_e_top, b_and_e_lower)
+b_and_e_extremes <- b_and_e_extremes %>% mutate(level = ifelse(prop >= 0.01457208, "high", "low"))
+
+```
+
+First, we try to identify which type of B&E occurs the most often in high-rate neighborhoods. To do this, we use a simple bar graph.
+```{r}
+ggplot(b_and_e_top, aes(x = offence)) +
+  geom_bar(color="darksalmon", fill="coral") + labs(x = "B&E Offence Type", y = "Number of Occurrences")
+```
+
+As we can see from this graph, 
+
+Next, we want to see if this trend is different from that of the low-rate neighborhoods. This can be done through a hypothesis test. 
+Our hypothesis test will seek to 
+$H_0$: $P_diff$ = 0
+$H_a$:$P_diff$ != 0
+where 
