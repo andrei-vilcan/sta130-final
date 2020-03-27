@@ -1,0 +1,58 @@
+Question 2: Is there a particular day of the week or hour of the day that inhabitants of high-rate neighbourhoods should be more wary of B&E’s? 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# echo=FALSE will stop the code chunk from appearing in the knit document
+# warning=FALSE and message=FALSE will stop R messages from appearing in the knit document
+library(tidyverse)
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Load the TPS break in data
+break_and_enters <- read_csv("break_and_enters.csv")
+glimpse(break_and_enters)
+```
+
+We want to get all of the high-frequency neighbourhoods, which we have definied as being in the top quartile of B&E occurances.
+
+First, let's get a list of all unique neighbourhood values in break_and_enters$Neighbourhood, and their associated number of occurances.
+
+```{r}
+neighbourhoods <- table(break_and_enters$Neighbourhood)
+neighbourhoods <- data.frame(neighbourhoods) 
+colnames(neighbourhoods) <- c("Neighbourhood", "Frequency")
+neighbourhoods <- neighbourhoods[order(neighbourhoods$Frequency, decreasing = TRUE),]  
+
+print(neighbourhoods)
+```
+
+Now we get the top 25% of neighbourhoods with the most frequent B&E's.
+```{r}
+target_hoods <- head(neighbourhoods, 35)
+print(target_hoods)
+```
+
+Finally, we can grab a subset of all rows in our raw break_and_enters dataframe, and target rows that are in one of those 35 neighbourhoods.
+
+```{r}
+target_data <- break_and_enters %>%
+      filter(Neighbourhood %in% target_hoods$Neighbourhood)
+
+print(target_data)
+```
+
+Now let's graph out a frequency table of B&E's per day
+```{r}
+
+```
+
+TODO:
+  -Daily graphs, hourly graphs
+  -Comparison with B&E frequencies of every other neighbourhood
+  -Some sort of written analysis
+
+
+
+
+
+
