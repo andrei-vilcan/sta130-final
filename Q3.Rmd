@@ -51,11 +51,54 @@ First, we try to identify which type of B&E occurs the most often in high-rate n
 ggplot(b_and_e_top, aes(x = offence)) +
   geom_bar(color="darksalmon", fill="coral") + labs(x = "B&E Offence Type", y = "Number of Occurrences")
 ```
-
-As we can see from this graph, 
+As we can see from this graph, B&E is the most common offence type in neighborhoods with high rates.
 
 Next, we want to see if this trend is different from that of the low-rate neighborhoods. This can be done through a hypothesis test. 
 Our hypothesis test will seek to 
-$H_0$: $P_diff$ = 0
-$H_a$:$P_diff$ != 0
-where 
+$H_0$: $P_\text{diff}$ = 0
+$H_a$: $P_\text{diff}$ != 0
+where $H_0$ represents the null hypothesis, $H_a$ the alternative hypothesis, and $P_\text{diff}$ the difference between the proportion of a certain offence type in high B&E rate neighborhoods and that of low B&E rate neighborhoods.
+
+```{r}
+prop_bande <- b_and_e_extremes %>% 
+  group_by(level) %>%
+  summarise(n = n(), num_bne = sum(offence == "B&E"), prop_bne = num_bne/n)
+test_stat <- prop_bande %>%
+  summarise(test_stat = diff(prop_bne))
+test_stat
+```
+
+```{r}
+set.seed(123)
+repetitions <- 1000
+simulated_differences <- rep(NA, times=repetitions)
+for(i in 1:repetitions){
+  simdata <- b_and_e_extremes %>%
+    mutate(level=sample(level)) %>%
+    group_by(level) %>%
+    summarise(n = n(), num_bne = sum(offence == "B&E"), prop_bne = num_bne/n)
+  sim_prop_diff <- simdata %>% summarise(value = diff(prop_bne))
+  simulated_differences[i] <- as.numeric(sim_prop_diff)
+}
+sim <- tibble(prop_diff = simulated_differences)
+```
+
+```{r}
+ggplot(sim, aes(x=prop_diff)) +
+geom_histogram(binwidth = 0.005, fill="gray", color="black") +
+labs(x = "Difference in proportion of B&E (offence) for neighborhoods 
+     with high B&E rates versus those with low B&E rates") + 
+  geom_vline(xintercept=c(test_stat, -test_stat), color="red")
+sim %>% 
+  filter(prop_diff >= abs(test_stat) | prop_diff <= -abs(test_stat))%>%
+  summarise(pvalue = n() / repetitions)
+```
+Since the p-value is less than 0.0001, we have strong evidence against the null hypothesis that there is no difference in proportion of B&E offences between neighborhoods with high B&E rates and those with low B&E rates.
+
+```{r}
+b_and_e_extremes <- b_and_e_extremes %>% 
+  mutate(BnE = ifelse(premisetype == "B&E", "Yes", "No")) 
+ggplot(b_and_e_extremes, aes(x=BnE, y=prop)) +
+  geom_boxplot() + theme_bw() + facet_wrap(~level)
+summary(lm(number ~ BnE, data=b_and_e_top))$coefficients
+```
