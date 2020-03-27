@@ -97,8 +97,8 @@ Since the p-value is less than 0.0001, we have strong evidence against the null 
 
 ```{r}
 b_and_e_extremes <- b_and_e_extremes %>% 
-  mutate(BnE = ifelse(premisetype == "B&E", "Yes", "No")) 
+  mutate(BnE = ifelse(offence == "B&E", "Yes", "No")) 
 ggplot(b_and_e_extremes, aes(x=BnE, y=prop)) +
   geom_boxplot() + theme_bw() + facet_wrap(~level)
-summary(lm(number ~ BnE, data=b_and_e_top))$coefficients
+summary(lm(prop ~ BnE, data=b_and_e_extremes))$coefficients
 ```
