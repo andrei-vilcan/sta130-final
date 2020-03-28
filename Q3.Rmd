@@ -1,5 +1,10 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
 
-Is there a certain kind of B&E that occurs more often in these high-rate neighborhoods?
+What, if any, is the most common type of Break and Enters (B&E) that occur in high-rate B&E neighbouroods, and does this type occur more often than in low-rate B&E neighbourhoods?
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # echo=FALSE will stop the code chunk from appearing in the knit document
@@ -87,24 +92,56 @@ sim <- tibble(prop_diff = simulated_differences)
 ```
 
 ```{r}
-ggplot(sim, aes(x=prop_diff)) +
-geom_histogram(binwidth = 0.005, fill="gray", color="black") +
-labs(x = "Difference in proportion of B&E (offence) for neighborhoods 
-     with high B&E rates versus those with low B&E rates") + 
-  geom_vline(xintercept=c(test_stat, -test_stat), color="red")
+#ggplot(sim, aes(x=prop_diff)) +
+#geom_histogram(binwidth = 0.005, fill="gray", color="black") +
+#labs(x = "Difference in proportion of B&E (offence) for neighborhoods 
+   #  with high B&E rates versus those with low B&E rates") + 
+ # geom_vline(xintercept=c(test_stat, -test_stat), color="red")
 sim %>% 
-  filter(prop_diff >= abs(test_stat) | prop_diff <= -abs(test_stat))%>%
+  filter(prop_diff >= abs(test_stat) | prop_diff <= -abspr(test_stat))%>%
   summarise(pvalue = n() / repetitions)
 ```
-Since the p-value is less than 0.0001, we have strong evidence against the null hypothesis that there is no difference in proportion of B&E offences between neighborhoods with high B&E rates and those with low B&E rates.
+Since the p-value is less than 0.0001, we have very strong evidence against the null hypothesis that there is no difference in proportion of B&E offences between neighborhoods with high B&E rates and those with low B&E rates. Thus we can conclude that there is a difference in proportion of the B&E type offences between high and low rate B&E rate neighbourhoods. 
 
+Next we will show how the proportion of Break and Enters differs between high and low rate neighbourhoods on a plot: 
 ```{r}
-b_and_e_extremes <- b_and_e_extremes %>% 
+b_and_e_top <- b_and_e_top %>% 
   mutate(BnE = ifelse(offence == "B&E", "Yes", "No")) 
-ggplot(b_and_e_extremes, aes(x=BnE, y=prop)) +
-  geom_boxplot() + theme_bw() + facet_wrap(~level)
-summary(lm(prop ~ BnE, data=b_and_e_extremes))$coefficients
+ggplot(b_and_e_top, aes(x=BnE, y=prop)) +
+  geom_boxplot() + theme_bw()
+
+b_and_e_lower <- b_and_e_lower %>% 
+  mutate(BnE = ifelse(offence == "B&E", "Yes", "No")) 
+ggplot(b_and_e_lower, aes(x=BnE, y=prop)) +
+  geom_boxplot() + theme_bw()
+
 ```
+From the high rate neighbourhoods it is evident ...
+
+
+*change this description for multilinear regression
+Further, we will use another method - linear regresssion model to predict the proportion of BnE using the BnE as a predictor. The regression equation will be: 
+BnEprop$_{i}$=$\beta _{0}$+$\beta _{1}$I 
+Where our dependent variable is BnEprop for the ith observation, I is the independent variable, $\beta B_{0}$ is the intercept parameter and $\beta B_{1}$ is the slope parameter.
+We are interested to test the
+$H_0$: $P_\text{diff}$ = 0
+$H_a$: $P_\text{diff}$ != 0
+where $H_0$ represents the null hypothesis, $H_a$ the alternative hypothesis, and $P_\text{diff}$ is difference between the proportion of a certain offence type in high B&E rate neighborhoods and that of low B&E rate neighborhoods.
+We will assess whether there is a linear association between the two variables.  
+```{r}
+#summary(lm(prop ~ BnE, data=b_and_e_extremes))$coefficients
+#heights %>% ggplot(aes(x=footLength, y=height)) + geom_point() +   geom_smooth(method="lm", se=FALSE) + theme_minimal()
+
+parallel_lines <- lm(prop ~ offence + level, data = b_and_e_extremes)
+summary(parallel_lines)$coefficients
+library(broom) 
+augment(parallel_lines)
+b_and_e_extremes %>% ggplot(aes(x=offence, y=prop, color=level))+geom_point(alpha=0.5) + geom_line(data=augment(parallel_lines), aes(y=.fitted, colour=level), lwd=1.5) 
+
+```
+
+From the model, we can see that the p-value is 
+
 <<<<<<< HEAD
 
 =======
