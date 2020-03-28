@@ -4,6 +4,7 @@ output:
   html_document: default
 ---
 
+<<<<<<< HEAD
 What, if any, is the most common type of Break and Enters (B&E) that occur in high-rate B&E neighbouroods, and does this type occur more often than in low-rate B&E neighbourhoods?
 
 
@@ -107,16 +108,8 @@ Since the p-value is less than 0.0001, we have very strong evidence against the 
 
 Next we will show how the proportion of Break and Enters differs between high and low rate neighbourhoods on a plot: 
 ```{r}
-b_and_e_top <- b_and_e_top %>% 
-  mutate(BnE = ifelse(offence == "B&E", "Yes", "No")) 
-ggplot(b_and_e_top, aes(x=BnE, y=prop)) +
+ggplot(b_and_e_extremes, aes(x=level, y=prop)) +
   geom_boxplot() + theme_bw()
-
-b_and_e_lower <- b_and_e_lower %>% 
-  mutate(BnE = ifelse(offence == "B&E", "Yes", "No")) 
-ggplot(b_and_e_lower, aes(x=BnE, y=prop)) +
-  geom_boxplot() + theme_bw()
-
 ```
 From the high rate neighbourhoods it is evident ...
 
@@ -131,9 +124,6 @@ $H_a$: $P_\text{diff}$ != 0
 where $H_0$ represents the null hypothesis, $H_a$ the alternative hypothesis, and $P_\text{diff}$ is difference between the proportion of a certain offence type in high B&E rate neighborhoods and that of low B&E rate neighborhoods.
 We will assess whether there is a linear association between the two variables.  
 ```{r}
-#summary(lm(prop ~ BnE, data=b_and_e_extremes))$coefficients
-#heights %>% ggplot(aes(x=footLength, y=height)) + geom_point() +   geom_smooth(method="lm", se=FALSE) + theme_minimal()
-
 parallel_lines <- lm(prop ~ offence + level, data = b_and_e_extremes)
 summary(parallel_lines)$coefficients
 library(broom) 
