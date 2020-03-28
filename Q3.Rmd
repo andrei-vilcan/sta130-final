@@ -49,12 +49,11 @@ b_and_e_extremes <- b_and_e_extremes %>% mutate(level = ifelse(prop >= 0.0145720
 First, we try to identify which type of B&E occurs the most often in high-rate neighborhoods. To do this, we use a simple bar graph.
 ```{r}
 ggplot(b_and_e_top, aes(x = offence)) +
-  geom_bar(color="darksalmon", fill="coral") + labs(x = "B&E Offence Type", y = "Number of Occurrences")
+  geom_bar(color="darksalmon", fill="coral") + 
+  labs(x = "B&E Offence Type", y = "Number of Occurrences") +
+  coord_flip()
 ```
-<<<<<<< HEAD
 
-=======
->>>>>>> 09d98f4bdb7dcd8b96e2980566b3dc32811776bb
 As we can see from this graph, B&E is the most common offence type in neighborhoods with high rates.
 
 Next, we want to see if this trend is different from that of the low-rate neighborhoods. This can be done through a hypothesis test. 
