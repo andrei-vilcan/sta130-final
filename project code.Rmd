@@ -1,7 +1,7 @@
 ---
 title: "Toronto Police Break and Enter Data Analysis"
-author: "Adele, Wayne, Alexandra, Andrei & Cindy, TUT0201, Group 4"
-subtitle: "The subtitle of my project"
+author: "Adele, Wayne, Alexandra, Andrei & Cindy(Shih-Ting), TUT0201, Group 4"
+subtitle: "Studying Crime Trends in Neighborhoods with high B&E rates"
 date: March 30, 2020
 output: 
   beamer_presentation:
@@ -89,6 +89,8 @@ We were interested in the extremes of this data--in other words, neighborhoods t
 
 Describe here what you have done to the data without presenting any results (output). If you want to indicate variables by symbols or variable names, define them here. 
 Subquestion 1: Hypothesis Test for Difference in Proportions and Linear Regression
+Subquestion 2:
+Subquestion 3: Bar Graph for Identifying Most Common Offence in High-Rate Neighborhoods, Hypothesis Test for Difference in Proportions, Multi-Linear Regression (?)
 
 ## Results--Subquestion 1:
 
@@ -200,7 +202,48 @@ The Root Mean Squared Error measures prediction error for predictions from a lin
 
 
 
-
+## Results--Subquestion 3:
+From the bar graph below, we can clearly identify that B&E offences occur the most often in high-risk neighborhoods. 
+```{r}
+ggplot(b_and_e_top, aes(x = offence)) +
+  geom_bar(color="darksalmon", fill="coral") + 
+  labs(x = "B&E Offence Type", y = "Number of Occurrences") +
+  coord_flip() +
+  ggtitle("Frecuency of Each Type of Offence in 
+          High-Risk Neighborhoods")
+```
+In order to determine if this specific offence type occurs more often in high-risk than low-risk neighborhoods, we conduct a hypothesis test:
+$H_0$: $P_\text{diff}$ = 0
+$H_a$: $P_\text{diff}$ != 0
+where $P_\text{diff}$ represents the difference between the proportion of B&E offences in high-risk neighborhoods and that of low-risk neighborhoods.
+```{r}
+prop_bande <- b_and_e_extremes %>% 
+  group_by(level) %>%
+  summarise(n = n(), num_bne = sum(offence == "B&E"), prop_bne = num_bne/n)
+test_stat_q3 <- prop_bande %>%
+  summarise(test_stat_q3 = diff(prop_bne))
+set.seed(123)
+repetitions3 <- 1000
+simulated_differences_q3 <- rep(NA, times=repetitions3)
+for(i in 1:repetitions3){
+  simdata_q3 <- b_and_e_extremes %>%
+    mutate(level=sample(level)) %>%
+    group_by(level) %>%
+    summarise(n = n(), num_bne = sum(offence == "B&E"), prop_bne = num_bne/n)
+  sim_prop_diff_q3 <- simdata_q3 %>% summarise(value = diff(prop_bne))
+  simulated_differences_q3[i] <- as.numeric(sim_prop_diff_q3)
+}
+sim_q3 <- tibble(prop_diff_q3 = simulated_differences_q3)
+ggplot(sim_q3, aes(x = prop_diff_q3)) +
+  geom_histogram(binwidth = 0.005, fill="gray", color="black") +
+  labs(x = "Difference in proportion of B&Es for H/LR neighborhoods,
+       assuming no difference between groups") + 
+  geom_vline(xintercept=c(test_stat_q3, -test_stat_q3), color="red")
+sim_q3 %>% 
+  filter(prop_diff_q3 >= abs(test_stat_q3) | prop_diff_q3 <= -abs(test_stat_q3))%>%
+  summarise(pvalue_q3 = n() / repetitions3)
+```
+Since the p-value is less than 0.0001, it means that there is a low possibility that there is data as unusual as our observed value (test statistic) under the null hypothesis. Therefore, we have strong evidence against the null that there is no difference in the proportion of B&E offences between high-risk and low-risk neighborhoods.
 
 ## Conclusion
 
