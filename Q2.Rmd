@@ -18,6 +18,7 @@ We want to get all of the high-frequency neighbourhoods, which we have definied 
 First, let's get a list of all unique neighbourhood values in break_and_enters$Neighbourhood, and their associated number of occurances.
 
 ```{r}
+break_and_enters <- break_and_enters %>% filter(!is.na(Neighbourhood))
 neighbourhoods <- table(break_and_enters$Neighbourhood)
 neighbourhoods <- data.frame(neighbourhoods) 
 colnames(neighbourhoods) <- c("Neighbourhood", "Frequency")
@@ -35,21 +36,89 @@ print(target_hoods)
 Finally, we can grab a subset of all rows in our raw break_and_enters dataframe, and target rows that are in one of those 35 neighbourhoods.
 
 ```{r}
-target_data <- break_and_enters %>%
-      filter(Neighbourhood %in% target_hoods$Neighbourhood)
+break_and_enters <- break_and_enters %>% 
+  mutate(targeted = ifelse(Neighbourhood %in% target_hoods$Neighbourhood, "Bottom 25%", "Top 75%"))
+  
+print(break_and_enters)
 
-print(target_data)
 ```
 
-Now let's graph out a frequency table of B&E's per day
+Now let's graph out a frequency table of B&E's per day.
 ```{r}
+targeted <- break_and_enters %>% 
+  group_by(targeted) %>% 
+  filter(!is.na(occurrenceyear))
 
+ggplot(targeted, aes(x = occurrenceyear)) +
+  geom_bar(colour = "black", fill = "blue", alpha = 0.2) +
+  facet_wrap(~targeted) +
+  xlab("Year") +
+  ylab("Number of Occurrences")
+```
+We can only assume that there is little data recorded in this database on B&E's before 2014. Broadly speaking, we have recently seen an increasing trend year on year, with 2019 being the highest on record.
+
+Here's another one based on month:
+```{r}
+targeted <- break_and_enters %>% 
+  group_by(targeted) %>% 
+  filter(!is.na(occurrencemonth))
+
+ggplot(targeted, aes(x = occurrencemonth)) +
+  geom_bar(colour = "black", fill = "blue", alpha = 0.2) +
+  facet_wrap(~targeted) +
+  xlab("Month") +
+  ylab("Number of Occurrences") +
+  scale_x_discrete(label = month.name)
+  
 ```
 
-TODO:
-  -Daily graphs, hourly graphs
-  -Comparison with B&E frequencies of every other neighbourhood
-  -Some sort of written analysis
+One for occurence day:
+```{r}
+targeted <- break_and_enters %>% 
+  group_by(targeted) %>% 
+  filter(!is.na(occurrenceday))
+
+ggplot(targeted, aes(x = occurrenceday)) +
+  geom_bar(colour = "black", fill = "blue", alpha = 0.2) +
+  facet_wrap(~targeted) +
+  xlab("Day of the Month") +
+  ylab("Number of Occurrences")
+```
+
+On occurrence day of the week:
+```{r}
+targeted <- break_and_enters %>% 
+  group_by(targeted) %>% 
+  filter(!is.na(occurrencedayofweek))
+
+day.name <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+
+ggplot(targeted, aes(x = occurrencedayofweek)) +
+  geom_bar(colour = "black", fill = "blue", alpha = 0.2) +
+  facet_wrap(~targeted) +
+  xlab("Day of the Week") +
+  ylab("Number of Occurrences") +
+  scale_x_discrete(label = day.name)
+```
+
+And finally, occurence hour:
+```{r}
+targeted <- break_and_enters %>% 
+  group_by(targeted) %>% 
+  filter(!is.na(occurrencehour))
+
+ggplot(targeted, aes(x = occurrencehour)) +
+  geom_bar(colour = "black", fill = "blue", alpha = 0.2) +
+  facet_wrap(~targeted) +
+  xlab("Hour of the Day") +
+  ylab("Number of Occurrences")
+```
+
+All this being said, since all these trends are looking very similar for both groups, we put up the question: are there any differences between the bottom 25% and the top 75% in the timing of B&Es?
+
+Null Hypothesis: There is no difference in the patterns describing when B&Es occur in our worst-affected neighbourhoods.
+Alternative Hypothesis: The patterns describing when B&Es occur are different in our worst-affected neighbourhoods.
+
 
 
 

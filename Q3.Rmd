@@ -6,6 +6,7 @@ output:
 
 What, if any, is the most common type of Break and Enters (B&E) that occur in high-rate B&E neighbouroods, and does this type occur more often than in low-rate B&E neighbourhoods?
 
+
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # echo=FALSE will stop the code chunk from appearing in the knit document
 # warning=FALSE and message=FALSE will stop R messages from appearing in the knit document
@@ -56,13 +57,14 @@ First, we try to identify which type of B&E occurs the most often in high-rate n
 ggplot(b_and_e_top, aes(x = offence)) +
   geom_bar(color="darksalmon", fill="coral") + 
   labs(x = "B&E Offence Type", y = "Number of Occurrences") +
-  coord_flip()
+  coord_flip() +
+  ggtitle("Frecuency of Each Type of Offence in 
+          High-Rate Neighborhoods")
 ```
 
 As we can see from this graph, B&E is the most common offence type in neighborhoods with high rates.
 
-Next, we want to see if this trend is different from that of the low-rate neighborhoods. This can be done through a hypothesis test. 
-Our hypothesis test will seek to 
+Next, we want to see if this trend is different from that of the low-rate neighborhoods. To study the relationship between proportion of specifically B&E offences and general B&E rate in neighborhoods, we will conduct a hypothesis test.
 $H_0$: $P_\text{diff}$ = 0
 $H_a$: $P_\text{diff}$ != 0
 where $H_0$ represents the null hypothesis, $H_a$ the alternative hypothesis, and $P_\text{diff}$ the difference between the proportion of a certain offence type in high B&E rate neighborhoods and that of low B&E rate neighborhoods.
