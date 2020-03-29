@@ -245,6 +245,30 @@ sim_q3 %>%
   filter(prop_diff_q3 >= abs(test_stat_q3) | prop_diff_q3 <= -abs(test_stat_q3))%>%
   summarise(pvalue3 = n() / repetitions)
 ```
+Next we will show how the proportion of type Break and Enters differs between high and low rate neighbourhoods on a plot: 
+```{r}
+ggplot(b_and_e_extremes, aes(x=level, y=prop)) +
+  geom_boxplot() + theme_bw()
+```
+It is evident that the proportions of break and enters in high-rate neighbourhoods have a much larger range than in low-rate neighbourhoods of this particular type of offence. 
+
+Further, we will use another method - a multilinear regresssion model to predict the proportion of Break and Enters using the offence types and level as predictors. The regression equation will be: 
+y$_{i}$=$\beta _{0}$+$\beta _{1}$x$_{1i}$ +$\beta _{1}$x$_{2i}$
+where our response variable is y for the ith observation, x$_{1i}$ and x$_{2i}$ are the independent variables, $\beta B_{0}$ is the intercept parameter and $\beta B_{1}$ is the slope parameter.
+We are interested to test the
+$H_0$: $P_\text{diff}$ = 0
+$H_a$: $P_\text{diff}$ != 0
+where $H_0$ represents the null hypothesis, $H_a$ the alternative hypothesis, and $P_\text{diff}$ is difference between the proportion of a certain offence type in B&E rated neighborhoods.
+```{r}
+parallel_lines <- lm(prop ~ offence + level, data = b_and_e_extremes)
+summary(parallel_lines)$coefficients
+library(broom) 
+augment(parallel_lines)
+b_and_e_extremes %>% ggplot(aes(x=offence, y=prop, color=level))+geom_point(alpha=0.5) + geom_line(data=augment(parallel_lines), aes(y=.fitted, colour=level), lwd=1.5) 
+```
+Based on the fitted regression model, the corresponding p-value test is very small (P = 0.0), so we have very strong evidence to reject the null hypothesis that there is no difference between  proportions of B&E offence types. So we can conclude that there is a difference of proportion between the level and B&E offence types. 
+
+
 
 \tiny As indicated by the red lines, our observed value used for the test is very unusual compared to the simulated ones. 
 * Since the p-value is less than 0.0001, it means that there is a low possibility that there is data as unusual as our observed value (test statistic) under the null hypothesis. 
