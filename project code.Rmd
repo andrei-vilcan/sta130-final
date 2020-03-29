@@ -203,8 +203,8 @@ The Root Mean Squared Error measures prediction error for predictions from a lin
 
 
 ## Results--Subquestion 3:
-From the bar graph below, we can clearly identify that B&E offences occur the most often in high-risk neighborhoods. 
-```{r}
+\tiny From the bar graph below, we can clearly identify that B&E offences occur the most often in high-risk neighborhoods. 
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=2}
 ggplot(b_and_e_top, aes(x = offence)) +
   geom_bar(color="darksalmon", fill="coral") + 
   labs(x = "B&E Offence Type", y = "Number of Occurrences") +
@@ -213,10 +213,17 @@ ggplot(b_and_e_top, aes(x = offence)) +
           High-Risk Neighborhoods")
 ```
 In order to determine if this specific offence type occurs more often in high-risk than low-risk neighborhoods, we conduct a hypothesis test:
+
 $H_0$: $P_\text{diff}$ = 0
 $H_a$: $P_\text{diff}$ != 0
+
 where $P_\text{diff}$ represents the difference between the proportion of B&E offences in high-risk neighborhoods and that of low-risk neighborhoods.
-```{r}
+
+
+## Results--Subquestion 3 Continued:
+
+\tiny
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=0, fig.height=0}
 prop_bande <- b_and_e_extremes %>% 
   group_by(level) %>%
   summarise(n = n(), num_bne = sum(offence == "B&E"), prop_bne = num_bne/n)
@@ -235,12 +242,15 @@ for(i in 1:repetitions3){
 }
 sim_q3 <- tibble(prop_diff_q3 = simulated_differences_q3)
 ```
-```{r}
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=2.5, fig.height=2.5}
 ggplot(sim_q3, aes(x=prop_diff_q3)) +
 geom_histogram(binwidth = 0.005, fill="gray", color="black") +
 labs(x = "Difference in proportion of B&E (offence) for high-risk versus
-     low-risk neighborhoods") + 
-  geom_vline(xintercept=c(test_stat_q3, -test_stat_q3), color="red")
+     low-risk neighborhoods")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=4.5, fig.height=0.5}
 sim_q3 %>% 
   filter(prop_diff_q3 >= abs(test_stat_q3) | prop_diff_q3 <= -abs(test_stat_q3))%>%
   summarise(pvalue3 = n() / repetitions)
