@@ -43,7 +43,7 @@ We then divided this question into a series of smaller subquestions, focused on 
 
 * Is there a particular day of the week or hour of the day that inhabitants should be more wary of B&E’s? 
 
-* Is there a certain kind of B&E that occurs more often in these high-rate neighborhoods?
+* What, if any, is the most common type of Break and Enters (B&E) that occur in high-rate B&E neighbouroods, and does this type occur more often than in low-rate B&E neighbourhoods?
 
 ## Objectives Continued
 Using the data given to us by the TPS, we want to understand commonalities between offenses in the neighborhoods that experience the highest proportion of break-and-enters. The purpose of doing so is to help the TPS understand the characteristics of B&E offences in vulnerable neighborhoods in order to allocate officers and other resources efficiently to reduce crime across the city. 
