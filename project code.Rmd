@@ -283,8 +283,7 @@ b_and_e_extremes %>% ggplot(aes(x=offence, y=prop, color=level))+geom_point(alph
 \tiny Based on the fitted regression model, the corresponding p-value test is very small (P = 0.0), so we have very strong evidence to reject the null hypothesis that there is no difference between  proportions of B&E offence types. So we can conclude that there is a difference of proportion between the level and B&E offence types. 
 
 
-
-\tiny Our observed value used for the test is very unusual compared to the simulated ones.   
+\tiny Thus, our observed value used for the test is very unusual compared to the simulated ones.
 - Since the p-value is less than 0.0001, it means that there is a **low possibility** that there is data **as unusual as our observed value (test statistic)** under the null hypothesis.  
 - Therefore, we have **strong** evidence against the null that there is no difference in the proportion of B&E offences between high-risk and low-risk neighborhoods.
 
