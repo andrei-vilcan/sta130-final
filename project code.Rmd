@@ -200,6 +200,199 @@ The Root Mean Squared Error measures prediction error for predictions from a lin
 
 The Root Mean Squared Error measures prediction error for predictions from a linear regression model. Splitting the data up into testing (20%) and training (80%), we see that the RSME for both is around 0.006. In other words, the prediction error for this model is 0.006. 
 
+
+## Results--Subquestion 2:
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=4, fig.height=1}
+# these lines are just some prerequisite variables referenced by Q2
+break_and_enters <- break_and_enters %>% filter(!is.na(Neighbourhood))
+neighbourhoods <- table(break_and_enters$Neighbourhood)
+neighbourhoods <- data.frame(neighbourhoods) 
+colnames(neighbourhoods) <- c("Neighbourhood", "Frequency")
+neighbourhoods <- neighbourhoods[order(neighbourhoods$Frequency, decreasing = TRUE),]  
+
+target_hoods <- head(neighbourhoods, 35)
+
+break_and_enters <- break_and_enters %>% 
+  mutate(targeted = ifelse(Neighbourhood %in% target_hoods$Neighbourhood, "Bottom 25%", "Top 75%"))
+
+top25 <- break_and_enters %>%
+  filter(Neighbourhood %in% target_hoods$Neighbourhood)
+
+bottom75 <- break_and_enters %>%
+  filter(!Neighbourhood %in% target_hoods$Neighbourhood)
+
+diff_factor = nrow(bottom75) / nrow(top25) 
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=2}
+targeted <- break_and_enters %>% 
+  group_by(targeted) %>% 
+  filter(!is.na(occurrenceyear))
+
+ggplot(targeted, aes(x = occurrenceyear)) +
+  geom_bar(colour = "black", fill = "blue", alpha = 0.2) +
+  facet_wrap(~targeted) +
+  xlab("Year") +
+  ylab("Occurrences")
+
+targeted <- break_and_enters %>% 
+  group_by(targeted) %>% 
+  filter(!is.na(occurrencemonth))
+
+targeted$occurrencemonth <- ordered(targeted$occurrencemonth, levels = month.name)
+
+ggplot(targeted, aes(x = occurrencemonth)) +
+  geom_bar(colour = "black", fill = "blue", alpha = 0.2) +
+  facet_wrap(~targeted) +
+  xlab("Month") +
+  ylab("Number of Occurrences") +
+  scale_x_discrete(label = month.abb)
+```
+
+## Results--Subquestion 2:
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=3}
+targeted <- break_and_enters %>% 
+  group_by(targeted) %>% 
+  filter(!is.na(occurrencedayofweek))
+
+day.abb <- c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+day.name <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+
+targeted$occurrencedayofweek <- ordered(targeted$occurrencedayofweek, levels = day.name)
+
+ggplot(targeted, aes(x = occurrencedayofweek)) +
+  geom_bar(colour = "black", fill = "blue", alpha = 0.2) +
+  facet_wrap(~targeted) +
+  xlab("Day of the Week") +
+  ylab("Number of Occurrences") +
+  scale_x_discrete(label = day.abb)
+
+targeted <- break_and_enters %>% 
+  group_by(targeted) %>% 
+  filter(!is.na(occurrencehour))
+
+ggplot(targeted, aes(x = occurrencehour)) +
+  geom_bar(colour = "black", fill = "blue", alpha = 0.2) +
+  facet_wrap(~targeted) +
+  xlab("Hour of the Day") +
+  ylab("Number of Occurrences")
+```
+
+## Subquestion 2--Are these trends any different?
+Are discreptencies in between trends in our two groups of neighbourhoods significant? Do our two groups have the same trends, or do the neighbourhoods with more frequent B&Es show different time trends?
+
+*hypothesis test*:  
+$H_0$: There is no difference in the patterns describing when B&Es occur in our worst-affected neighbourhoods.  
+$H_a$: The patterns describing when B&Es occur are different in our worst-affected neighbourhoods.  
+
+For the sake of simplicity, we will only analyze occurrence month and hour of day.
+
+## Subquestion 2--Occurrences by Month
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=3}
+table25 <- table(top25$occurrencemonth)
+table25 <- data.frame(table25)
+table25 <- table25[order(match(table25$Var1, month.name)), ] %>%
+  mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+
+table75 <- table(bottom75$occurrencemonth)
+table75 <- data.frame(table75)
+table75 <- table75[order(match(table75$Var1, month.name)), ] %>%
+  mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+
+delta <- abs(table75$change - table25$change)
+delta <- tibble(delta)
+delta <- delta %>% filter(!is.na(delta))
+
+test_stat <- sum(delta)
+
+set.seed(123)
+repetitions <- 1000; # number of repetitions (i.e. possible groupings)
+simulated_values <- rep(NA, repetitions); # empty vector for sim. values
+
+for(i in 1:repetitions){
+  
+  simdata <- sample_n(break_and_enters, 21142, replace = TRUE)
+  simdata <- table(simdata$occurrencemonth)
+  simdata <- data.frame(simdata)
+  simdata <- simdata[order(match(simdata$Var1, month.name)), ] %>%
+    mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+  
+  delta <- abs(table75$change - simdata$change)
+  delta <- tibble(delta)
+  delta <- delta %>% filter(!is.na(delta))
+  simulated_values[i] <- sum(delta)
+
+}
+
+simulated_values <- tibble(value = simulated_values)
+median <- median(simulated_values$value)
+  
+simulated_values %>% ggplot(aes(x=value)) +  
+  geom_histogram(colour = "black", fill = "grey") +  
+  geom_vline(xintercept = median  - abs(median - test_stat), color = "red") +  
+  geom_vline(xintercept = median + abs(median - test_stat), color = "blue") +
+  xlab("Differences in Monthly Change") +
+  ylab("Frequency")
+
+pvalue <- simulated_values %>%  
+  filter(abs(value - median) >= abs(test_stat - median)) %>%  
+  summarise(p_value = n() / repetitions)
+```
+With our test stat of 47.04 units of discreptency, we get a p-value of 0.236, suggesting no evidence against the null hypothesis. In other words, **monthly trends likely remain consistent in the most vulnerable neighbourhoods.**
+
+## Subquestion 2--Occurrences by Hour of Day
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=3}
+table25 <- table(top25$occurrencehour)
+table25 <- data.frame(table25)
+table25 <- table25[order(match(table25$Var1, month.name)), ] %>%
+  mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+
+table75 <- table(bottom75$occurrencehour)
+table75 <- data.frame(table75)
+table75 <- table75[order(match(table75$Var1, month.name)), ] %>%
+  mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+
+delta <- abs(table75$change - table25$change)
+delta <- tibble(delta)
+delta <- delta %>% filter(!is.na(delta))
+
+test_stat <- sum(delta)
+
+repetitions <- 1000; # number of repetitions (i.e. possible groupings)
+simulated_values <- rep(NA, repetitions); # empty vector for sim. values
+
+for(i in 1:repetitions){
+  
+  simdata <- sample_n(break_and_enters, 21142, replace = TRUE)
+  simdata <- table(simdata$occurrencehour)
+  simdata <- data.frame(simdata)
+  simdata <- simdata[order(match(simdata$Var1, month.name)), ] %>%
+    mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+  
+  delta <- abs(table75$change - simdata$change)
+  delta <- tibble(delta)
+  delta <- delta %>% filter(!is.na(delta))
+  simulated_values[i] <- sum(delta)
+
+}
+
+simulated_values <- tibble(value = simulated_values)
+median <- median(simulated_values$value)
+  
+simulated_values %>% ggplot(aes(x=value)) +  
+  geom_histogram(colour = "black", fill = "grey") +  
+  geom_vline(xintercept = median  - abs(median - test_stat), color = "red") +  
+  geom_vline(xintercept = median + abs(median - test_stat), color = "blue") +
+  xlab("Differences in Hourly Change") +
+  ylab("Frequency")
+
+pvalue <- simulated_values %>%  
+  filter(abs(value - median) >= abs(test_stat - median)) %>%  
+  summarise(p_value = n() / repetitions)
+```
+Again, with our test stat of 232.69 units of discreptency, we get a p-value of 0, suggesting strong evidence against the null hypothesis. In other words, **hourly trends in the most vulnerable neighbourhoods are very likely different in a significant way.**
+
 ## Results--Subquestion 3: 
 From the bar graph below, we can clearly identify that **B&E offences** occur the **most often** in high-risk neighborhoods.  
 
@@ -297,5 +490,3 @@ Here you can also mention any additional considerations, concerns, or issues you
 
 If you received any help from someone other than your team members you can acknowledge them. For example:   
 *The authors would like to thank "TA name" for helpful suggestions and comments that improved the presentation of this poster.*
-
-
