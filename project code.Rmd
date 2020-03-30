@@ -35,7 +35,7 @@ Though break and enters are not the most violent crimes, the preventative measur
 The data used to analyze these patterns comes from the Toronto Police Service, and includes reported break and enters from 2014-2019. 
 
 ## Objectives
-
+\tiny 
 Our main question which we seek to answer is: **"In neighborhoods with high B&E rates, what are the commonalities between the crimes?"** 
 We then divided this question into a series of smaller subquestions, focused on specific variables:
 
@@ -45,7 +45,6 @@ We then divided this question into a series of smaller subquestions, focused on 
 
 * Is there a certain kind of B&E that occurs more often in these high-rate neighborhoods?
 
-## Objectives Continued
 Using the data given to us by the TPS, we want to understand commonalities between offenses in the neighborhoods that experience the highest proportion of break-and-enters. The purpose of doing so is to help the TPS understand the characteristics of B&E offences in vulnerable neighborhoods in order to allocate officers and other resources efficiently to reduce crime across the city. 
 Once these strategies are implemented, it is likely that the city will change and different neighborhoods will become hotbeds for B&E's. Hopefully, once a strategy is developed for high-risk neighborhoods, it can be transplanted and altered slightly to work elsewhere.  
 
@@ -53,7 +52,7 @@ We hypothesize that premise type, as well as temporal trends such as time of day
 
 ## Data Summary 
 
-\tiny We first created a new variable for each offence based off of the neighborhood it occurred in, called *prop*, which represented the proportion of all break and enters that occurred in that neighborhood. We then created a boxplot and a corresponding summary table to help us understand how the proportions were distributed. 
+\tiny We first created a new variable for each offence based off of the neighborhood it occurred in, called *prop*, which represented the proportion of all break and enters that occurred in that neighborhood. We then created a boxplot and a corresponding summary table to help us understand how the proportions were distributed, where *prop* represents, for each observation, the total proportion of reported break-ins that occurred in that observation's neighborhood. 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # echo=FALSE will stop the code chunk from appearing in the knit document
@@ -67,8 +66,7 @@ break_and_enters_prop <- merge(break_and_enters,grouped_hood,by=c("X1", "Index",
 ```
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=5, fig.height=1.5}
 ggplot(break_and_enters_prop,
-aes(x = "", y=prop)) + xlab("Proportion of total break-ins that occurred in observation's 
-                            neighborhood") +
+aes(x = "", y=prop)) +
 geom_boxplot()
 ```
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=0.25, fig.height=0.25}
@@ -84,34 +82,25 @@ max=max(prop))
 
 
 ## Statistical Methods
-
-<<<<<<< HEAD
-Describe here what you have done to the data without presenting any results (output). If you want to indicate variables by symbols or variable names, define them here. 
-Subquestion 1: Hypothesis Test for Difference in Proportions and Linear Regression
-Subquestion 2:
-Subquestion 3: Bar Graph for Identifying Most Common Offence in High-Rate Neighborhoods, Hypothesis Test for Difference in Proportions, Multi-Linear Regression to predict the proportion of Break and Enters using the offence types and level as predictors. 
-=======
 \tiny 
 *Subquestion 1:* 
 
-* Hypothesis Test for Difference in Proportions of Commercial Break-ins and Linear Regression  
+* Hypothesis Test for Difference in Proportions of commercial break-ins between high/low risk neighborhoods: randomly shuffled values in original data without replacement, created a distribution of the differences under the assumption that there is no difference in proportion of commercial breakins in high- and low-risk neighborhoods.
+* Linear Regression using whether a premise was residential as a predictor 
 
-*Subquestion 2:*  
+*Subquestion 2:* 
+
+* Hypothesis Test for Difference in Proportions of Occurrence Hour and Occurrence Month
+
 *Subquestion 3:* 
 
 * Bar Graph: By examining the data specifically for high-risk neighborhoods, we identify which offence type appears the most and hence occurs the most often. 
->>>>>>> 6491e16599d54f48a1143b6b081a5d8720b2fec1
-
 * Hypothesis Test for Difference in Proportions: We randomly shuffled the values in the original data without replacement and got their distribution to see if the observed difference in proportion of B&E offences is "normal" under the assumption that there's no proportion difference between high-risk and low-risk neighborhoods. 
 
-* 
 
 ## Results--Subquestion 1: Hypothesis Test
-
-\tiny Upon initial observation, we noticed that the proportion of commercial break-ins in high-risk neighborhoods appeared much larger than commercial break-ins in low-risk neighborhoods. This was tested using a difference of proportions hypothesis test, using the following hypotheses: 
-
-$H_0:p_H = p_L$ & $H_A:p_H \neq p_L$,
-where $p_H , p_L$ are the proportion of commercial break-ins that happened in high- and low-risk neighborhoods, respectively. 
+\tiny 
+Upon initial observation, we noticed that the proportion of commercial break-ins in high-risk neighborhoods appeared much larger than commercial break-ins in low-risk neighborhoods, with an observed difference of 0.267. 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=0, fig.height=0}
 b_and_e_top <- break_and_enters_prop %>%
@@ -156,7 +145,9 @@ as.numeric()
 test_stat
 
 ```
-
+This was tested using a difference of proportions hypothesis test, using the following hypotheses: 
+$H_0:p_H = p_L$ & $H_A:p_H \neq p_L$,
+where $p_H , p_L$ are the proportion of commercial break-ins that happened in high- and low-risk neighborhoods, respectively. 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=1.5}
 ggplot(sim, aes(x=prop_diff)) +
@@ -172,7 +163,7 @@ Given the low p value of p < 0.0001, we can conclude that there is strong eviden
 
 \tiny This same question can be analyzed through a different lense: linear regression. For this method, a new variable **residential** was created that took the value *"Yes"* if the premise was a house or apartment, and *"No"* if it was anything else. 
 
-\tiny The equation we are testing is $prop_i = \beta_0 + \beta_1 I(premise\ is\ residential) + \epsilon_i$. In other words, we are seeing if whether a property is residential makes it more vulnerable to break-ins (vulnerability approximated by **prop**)
+\tiny The equation we are testing is $prop_i = \beta_0 + \beta_1 I(premise\ is\ residential) + \epsilon_i$. In other words, we are seeing if whether a property is residential makes it more vulnerable to break-ins (**vulnerability** approximated by **prop**)
 We are interested in testing $H_0: \beta_1 = 0$ vs $H_A: \beta_1 \neq 0$
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=4, fig.height=1}
@@ -206,9 +197,7 @@ RMSE_traindata = c(modB_train_RMSE),
 ratio_of_RMSEs = RMSE_traindata / RMSE_testdata)
 ```
 
-The Root Mean Squared Error measures prediction error for predictions from a linear regression model. Splitting the data up into testing (20%) and training (80%), we see that the RSME for both is around 0.006. Therefore, on average, predicted **vulnerabilities** (or proportions) are about 0.006 away from the true value in this data set restricted to high-risk neighborhoods. 
-
-The Root Mean Squared Error measures prediction error for predictions from a linear regression model. Splitting the data up into testing (20%) and training (80%), we see that the RSME for both is around 0.006. In other words, the prediction error for this model is 0.006. 
+The Root Mean Squared Error measures prediction error for predictions from a linear regression model. Splitting the data up into testing (20%) and training (80%), we see that the RSME for both is around 0.006. In other words, the prediction error for this model is 0.006 (referencing proportion estimates).
 
 
 ## Results--Subquestion 2: Frequency of Occurrence Year 
