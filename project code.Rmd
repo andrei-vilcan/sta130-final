@@ -85,6 +85,12 @@ max=max(prop))
 
 ## Statistical Methods
 
+<<<<<<< HEAD
+Describe here what you have done to the data without presenting any results (output). If you want to indicate variables by symbols or variable names, define them here. 
+Subquestion 1: Hypothesis Test for Difference in Proportions and Linear Regression
+Subquestion 2:
+Subquestion 3: Bar Graph for Identifying Most Common Offence in High-Rate Neighborhoods, Hypothesis Test for Difference in Proportions, Multi-Linear Regression to predict the proportion of Break and Enters using the offence types and level as predictors. 
+=======
 \tiny 
 *Subquestion 1:* 
 
@@ -94,6 +100,7 @@ max=max(prop))
 *Subquestion 3:* 
 
 * Bar Graph: By examining the data specifically for high-risk neighborhoods, we identify which offence type appears the most and hence occurs the most often. 
+>>>>>>> 6491e16599d54f48a1143b6b081a5d8720b2fec1
 
 * Hypothesis Test for Difference in Proportions: We randomly shuffled the values in the original data without replacement and got their distribution to see if the observed difference in proportion of B&E offences is "normal" under the assumption that there's no proportion difference between high-risk and low-risk neighborhoods. 
 
@@ -456,16 +463,16 @@ pval3 <- sim_q3 %>%
 * Therefore, we have **strong** evidence against the null that there is no difference in the proportion of B&E offences between high-risk and low-risk neighborhoods.
 
 
-## Results--Subquestion 3 Continued: 
+## Results--Subquestion 3 - Boxplot: 
 Next we will show how the proportion of type Break and Enters differs between high and low rate neighbourhoods on a plot: 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=2.5}
 ggplot(b_and_e_extremes, aes(x=level, y=prop)) +
-  geom_boxplot() + theme_bw()
+  geom_boxplot() + theme_bw() + ggtitle("Relationship of proportion of B&E offence type crimes in levels of different risk neighbouroods")
 ```
 
 It is evident that the proportions of break and enters in high-rate neighbourhoods have a much larger range than in low-rate neighbourhoods of this particular type of offence. 
 
-## Results--Subquestion 3 Continued: 
+## Results--Subquestion 3 multilinear regression results: 
 \tiny Further, we will use another method - a multilinear regresssion model to predict the proportion of Break and Enters using the offence types and level as predictors. The regression equation will be: 
 y$_{i}$=$\beta _{0}$+$\beta _{1}$x$_{1i}$ +$\beta _{1}$x$_{2i}$
 
@@ -479,11 +486,11 @@ parallel_lines <- lm(prop ~ offence + level, data = b_and_e_extremes)
 summary(parallel_lines)$coefficients
 ```
 
-## Results--Subquestion 3 Continued: 
+## Results--Subquestion 3 multilinear regression visual: 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=2.5}
 library(broom) 
 # augment(parallel_lines)
-b_and_e_extremes %>% ggplot(aes(x=offence, y=prop, color=level))+geom_point(alpha=0.5) + geom_line(data=augment(parallel_lines), aes(y=.fitted, colour=level), lwd=1.5) + coord_flip()
+b_and_e_extremes %>% ggplot(aes(x=offence, y=prop, color=level))+geom_point(alpha=0.5) + geom_line(data=augment(parallel_lines), aes(y=.fitted, colour=level), lwd=1.5) + coord_flip() + ggtitle("Proportion of each type of B&E's in level of risk neighbourhoods")
 ```
 \tiny Based on the fitted regression model, the corresponding p-value test is very small (P = 0.0), so we have very strong evidence to reject the null hypothesis that there is no difference between  proportions of B&E offence types. So we can conclude that there is a difference of proportion between the level and B&E offence types. 
 
