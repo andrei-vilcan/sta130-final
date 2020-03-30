@@ -80,7 +80,7 @@ Q3=quantile(prop, 0.75),
 max=max(prop))
 ```
 
----
+
 ## Data Summary Continued
 We were interested in the extremes of this data--in other words, neighborhoods that were high-risk and neighborhoods that were low-risk. This allows us look at data that is "extreme"--those with proportions <= the first quartile, and those >= the third (aka, the bottom 25% and the top 25% neighborhoods).
 
@@ -88,13 +88,21 @@ We were interested in the extremes of this data--in other words, neighborhoods t
 ## Statistical Methods
 
 Describe here what you have done to the data without presenting any results (output). If you want to indicate variables by symbols or variable names, define them here. 
-Subquestion 1: Hypothesis Test for Difference in Proportions and Linear Regression
-Subquestion 2:
-Subquestion 3: Bar Graph for Identifying Most Common Offence in High-Rate Neighborhoods, Hypothesis Test for Difference in Proportions, Multi-Linear Regression (?)
+\tiny 
+*Subquestion 1:* 
+
+* Hypothesis Test for Difference in Proportions and Linear Regression  
+
+*Subquestion 2:*  
+*Subquestion 3:* 
+
+* Bar Graph: By examining the data specifically for high-risk neighborhoods, we identify which offence type appears the most and hence occurs the most often. 
+
+* Hypothesis Test for Difference in Proportions: We randomly shuffled the values in the original data without replacement and got their distribution to see if the observed difference in proportion of B&E offences is "normal" under the assumption that there's no proportion difference between high-risk and low-risk neighborhoods. 
+
+* 
 
 ## Results--Subquestion 1:
-
-Upon initial observation, we noticed that the proportion of commercial break-ins in high-risk neighborhoods appeared much larger than commercial break-ins in low-risk neighborhoods. This was tested using a difference of proportions hypothesis test, using the following hypotheses: 
 
 \tiny Upon initial observation, we noticed that the proportion of commercial break-ins in high-risk neighborhoods appeared much larger than commercial break-ins in low-risk neighborhoods. This was tested using a difference of proportions hypothesis test, using the following hypotheses: 
 
@@ -160,9 +168,7 @@ Given the low p value of p < 0.0001, we can conclude that there is strong eviden
 
 This same question can be analyzed through a different lense: linear regression. For this method, a new variable **residential** was created that took the value *"Yes"* if the premise was a house or apartment, and *"No"* if it was anything else. 
 
-\tiny This same question can be analyzed through a different lense: linear regression. For this method, a new variable **residential** was created that took the value *"Yes"* if the premise was a house or apartment, and *"No"* if it was anything else. 
-
-The equation we are testing is $prop_i = \beta_0 + \beta_1 I(premise\ is\ residential) + \epsilon_i$. In other words, we are seeing if whether a property is residential makes it more vulnerable to break-ins (vulnerability approximated by **prop**)
+\tiny The equation we are testing is $prop_i = \beta_0 + \beta_1 I(premise\ is\ residential) + \epsilon_i$. In other words, we are seeing if whether a property is residential makes it more vulnerable to break-ins (vulnerability approximated by **prop**)
 We are interested in testing $H_0: \beta_1 = 0$ vs $H_A: \beta_1 \neq 0$
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=4, fig.height=1}
@@ -432,6 +438,8 @@ for(i in 1:repetitions3){
 sim_q3 <- tibble(prop_diff_q3 = simulated_differences_q3)
 ```
 
+\tiny Given this sampling distribution, we compare them with the test statistic, which is the proportion of B&E offences over the total number of offences as calculated from our sample data. We want to see if the test statistic is unusual under the null.
+
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=2.5}
 ggplot(sim_q3, aes(x=prop_diff_q3)) +
 geom_histogram(binwidth = 0.005, fill="gray", color="black") +
@@ -444,6 +452,12 @@ pval3 <- sim_q3 %>%
   filter(prop_diff_q3 >= abs(test_stat_q3) | prop_diff_q3 <= -abs(test_stat_q3))%>%
   summarise(pvalue3 = n() / repetitions)
 ```
+\tiny Thus, our observed value used for the test is very unusual compared to the simulated ones.  
+
+* Since the p-value is less than 0.0001, it means that there is a **low possibility** that there is data **as unusual as our observed value (test statistic)** under the null hypothesis.  
+
+* Therefore, we have **strong** evidence against the null that there is no difference in the proportion of B&E offences between high-risk and low-risk neighborhoods.
+
 
 ## Results--Subquestion 3 Continued: 
 Next we will show how the proportion of type Break and Enters differs between high and low rate neighbourhoods on a plot: 
@@ -451,7 +465,8 @@ Next we will show how the proportion of type Break and Enters differs between hi
 ggplot(b_and_e_extremes, aes(x=level, y=prop)) +
   geom_boxplot() + theme_bw()
 ```
-    It is evident that the proportions of break and enters in high-rate neighbourhoods have a much larger range than in low-rate neighbourhoods of this particular type of offence. 
+
+It is evident that the proportions of break and enters in high-rate neighbourhoods have a much larger range than in low-rate neighbourhoods of this particular type of offence. 
 
 ## Results--Subquestion 3 Continued: 
 \tiny Further, we will use another method - a multilinear regresssion model to predict the proportion of Break and Enters using the offence types and level as predictors. The regression equation will be: 
@@ -475,10 +490,6 @@ b_and_e_extremes %>% ggplot(aes(x=offence, y=prop, color=level))+geom_point(alph
 ```
 \tiny Based on the fitted regression model, the corresponding p-value test is very small (P = 0.0), so we have very strong evidence to reject the null hypothesis that there is no difference between  proportions of B&E offence types. So we can conclude that there is a difference of proportion between the level and B&E offence types. 
 
-
-\tiny Thus, our observed value used for the test is very unusual compared to the simulated ones.
-- Since the p-value is less than 0.0001, it means that there is a **low possibility** that there is data **as unusual as our observed value (test statistic)** under the null hypothesis.  
-- Therefore, we have **strong** evidence against the null that there is no difference in the proportion of B&E offences between high-risk and low-risk neighborhoods.
 
 ## Conclusion
 
