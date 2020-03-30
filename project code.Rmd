@@ -484,13 +484,82 @@ b_and_e_extremes %>% ggplot(aes(x=offence, y=prop, color=level))+geom_point(alph
 \tiny Based on the fitted regression model, the corresponding p-value test is very small (P = 0.0), so we have very strong evidence to reject the null hypothesis that there is no difference between  proportions of B&E offence types. So we can conclude that there is a difference of proportion between the level and B&E offence types. 
 
 
+## Putting It All Together
+\tiny 
+What does all this information mean? What is the intersection between time, premise type, and type of offence? This can be examined through multiple linear regression. Two regression equations were used. For each, new variables were created. In both, a variable **prop_premisetype** was created that, for each observation, corresponded to the proportion of commercial offences over total neighborhood offences. In the first model, a variable **regular** took the value "Yes" if offence was B&E, and "No" otherwise. In the second model, a variable **workday** took the value "Yes" if the offence occurred during the typical workday, adapted for commute times (7am-7pm), and "No" otherwise. 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Load the TPS break in data
+break_and_enters <- read_csv("break_and_enters.csv")
+wellbeing <- read_csv("wellbeing_toronto (1).csv")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+grouped_hood <- break_and_enters %>% 
+  filter(!is.na(Neighbourhood)) %>%
+  group_by(Neighbourhood) %>%
+  mutate(number = n()) %>%
+  mutate(prop = number/43302)
+break_and_enters_prop <- merge(break_and_enters,grouped_hood,by=c("X1", "Index", "event_unique_id", "occurrencedate", "reporteddate", "premisetype", "offence", "reportedyear", "reportedmonth", "reportedday", "reporteddayofyear", "reporteddayofweek", "reportedhour", "occurrenceyear", "occurrencemonth", "occurrenceday", "occurrencedayofyear", "occurrencedayofweek", "occurrencehour", "MCI", "Division", "Hood_ID", "Long", "Lat"))
+wellbeing <- wellbeing %>% mutate(Hood_ID = `Neighbourhood Id`) %>% mutate(Income = `Average Family Income`)
+break_and_enters_income <- merge(break_and_enters_prop,wellbeing,by=c("Hood_ID"))
+```
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+b_and_e_top_income <- break_and_enters_income %>%
+  filter(prop >= 0.01457208)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+grouped_both <- break_and_enters_income %>%
+  mutate(commercial = ifelse(premisetype == "Commercial", "Yes", "No")) %>%
+  group_by(Neighbourhood, commercial) %>%
+  mutate(num_commercial = n()) %>%
+  mutate(prop_premisetype = num_commercial/number) %>%
+  mutate(prop_total = number/43302) %>%
+  filter(commercial == "Yes")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+grouped_workday <- break_and_enters_income %>%
+  mutate(workday = ifelse(occurrencehour >= 7 & occurrencehour <= 14, "Yes", "No")) %>%
+  group_by(Neighbourhood, workday) %>%
+  mutate(num_workday = n()) %>%
+  mutate(prop_workday = num_workday/number) %>%
+  mutate(prop_total = number/43302) %>%
+  filter(workday == "Yes")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+grouped_both <- grouped_both  %>%
+  mutate(workday = ifelse(occurrencehour >= 7 & occurrencehour <= 14, "Yes", "No")) 
+mod1 <- lm(prop_total ~ prop_premisetype * workday, data = grouped_both)
+summary(mod1)$coefficients
+summary(mod1)$r.squared
+grouped_both <- grouped_both  %>%
+mutate(regular = ifelse(offence == "B&E", "Yes", "No"))
+mod2 <- lm(prop_total ~ prop_premisetype * regular, data = grouped_both)
+summary(mod2)$coefficients
+summary(mod2)$r.squared
+```
+
+## Putting It All Together: Graphs
+\tiny Each of these graphs plots *Local Commercial Rate* against *Overall Neighborhood Occurrence Rate*. 
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=2.5, fig.height=2} 
+grouped_both %>% ggplot(aes(x=prop_premisetype, y=prop_total, color = workday)) + geom_point() +
+geom_smooth(method="lm", se=FALSE) + theme_minimal() + xlab("") + ylab("") 
+```
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=2.5, fig.height=2} 
+grouped_both %>% ggplot(aes(x=prop_premisetype, y=prop_total, color = regular)) + geom_point() +
+geom_smooth(method="lm", se=FALSE) + theme_minimal() + xlab("") + ylab("") 
+```
+
+\tiny For each graph, the correlation coefficient, **r**, is about 0.31 and 0.307, respectively, indicating a weak, positive correlation. In other words, this means that roughly 31% and 30.7% of the variation in the **Overall Neighborhood Occurrence Rate** is explained by our linear regression. The for the first model, it appears as though all terms are significant except for the binary variable **workday**, yet the interaction of **workday** with **prop_premisetype** is significant. For the second model, neither **regular** nor the interaction term are significant, potentially related to this model's lower **r** value.  
+
+
 ## Conclusion
 
 Give your main conclusions here. Follow the order of questions you presented. 
 
 Here you can also mention any additional considerations, concerns, or issues you might have. For example, if the results were unexpected, you can discuss this and perhaps offer possible explanations.
 
-## Acknowledgements (optional)
 
-If you received any help from someone other than your team members you can acknowledge them. For example:   
-*The authors would like to thank "TA name" for helpful suggestions and comments that improved the presentation of this poster.*
