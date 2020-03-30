@@ -1,0 +1,83 @@
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Load the TPS break in data
+break_and_enters <- read_csv("break_and_enters.csv")
+wellbeing <- read_csv("wellbeing_toronto (1).csv")
+```
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# echo=FALSE will stop the code chunk from appearing in the knit document
+# warning=FALSE and message=FALSE will stop R messages from appearing in the knit document
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+
+```
+```{r}
+grouped_hood <- break_and_enters %>% 
+  filter(!is.na(Neighbourhood)) %>%
+  group_by(Neighbourhood) %>%
+  mutate(number = n()) %>%
+  mutate(prop = number/43302)
+break_and_enters_prop <- merge(break_and_enters,grouped_hood,by=c("X1", "Index", "event_unique_id", "occurrencedate", "reporteddate", "premisetype", "offence", "reportedyear", "reportedmonth", "reportedday", "reporteddayofyear", "reporteddayofweek", "reportedhour", "occurrenceyear", "occurrencemonth", "occurrenceday", "occurrencedayofyear", "occurrencedayofweek", "occurrencehour", "MCI", "Division", "Hood_ID", "Long", "Lat"))
+wellbeing <- wellbeing %>% mutate(Hood_ID = `Neighbourhood Id`) %>% mutate(Income = `Average Family Income`)
+break_and_enters_income <- merge(break_and_enters_prop,wellbeing,by=c("Hood_ID"))
+```
+```{r}
+b_and_e_top_income <- break_and_enters_income %>%
+  filter(prop >= 0.01457208)
+```
+
+```{r}
+grouped_both <- break_and_enters_income %>%
+  mutate(commercial = ifelse(premisetype == "Commercial", "Yes", "No")) %>%
+  group_by(Neighbourhood, commercial) %>%
+  mutate(num_commercial = n()) %>%
+  mutate(prop_premisetype = num_commercial/number) %>%
+  mutate(prop_total = number/43302) %>%
+  filter(commercial == "Yes")
+ggplot(data = grouped_both) +
+aes(x = prop_premisetype, y = prop_total) +
+geom_point()
+mod <- lm(prop_total ~ prop_premisetype, data = grouped_both)
+summary(mod)$coefficients
+summary(mod)$r.squared
+grouped_both %>% ggplot(aes(x=prop_premisetype, y=prop_total)) + geom_point() +
+geom_smooth(method="lm", se=FALSE) + theme_minimal()
+```
+Weak positive correlation, super low B so these are probably related
+```{r}
+grouped_workday <- break_and_enters_income %>%
+  mutate(workday = ifelse(occurrencehour >= 7 & occurrencehour <= 14, "Yes", "No")) %>%
+  group_by(Neighbourhood, workday) %>%
+  mutate(num_workday = n()) %>%
+  mutate(prop_workday = num_workday/number) %>%
+  mutate(prop_total = number/43302) %>%
+  filter(workday == "Yes")
+ggplot(data = grouped_workday) +
+aes(x = prop_workday, y = prop_total) +
+geom_point()
+mod <- lm(prop_total ~ prop_workday, data = grouped_workday)
+summary(mod)$coefficients
+summary(mod)$r.squared
+grouped_workday %>% ggplot(aes(x=prop_workday, y=prop_total)) + geom_point() +
+geom_smooth(method="lm", se=FALSE) + theme_minimal()
+```
+```{r}
+grouped_workday <- grouped_workday %>%
+  mutate(commercial = ifelse(premisetype == "Commercial", "Yes", "No"))
+mod <- lm(prop_total ~ prop_workday * commercial, data = grouped_workday)
+summary(mod)$coefficients
+summary(mod)$r.squared
+grouped_workday %>% ggplot(aes(x=prop_workday, y=prop_total, color = commercial)) + geom_point() +
+geom_smooth(method="lm", se=FALSE) + theme_minimal()
+
+```
+```{r}
+grouped_both <- grouped_both  %>%
+  mutate(workday = ifelse(occurrencehour >= 7 & occurrencehour <= 14, "Yes", "No"))
+mod <- lm(prop_total ~ prop_premisetype * workday, data = grouped_both)
+summary(mod)$coefficients
+summary(mod)$r.squared
+grouped_both %>% ggplot(aes(x=prop_premisetype, y=prop_total, color = workday)) + geom_point() +
+geom_smooth(method="lm", se=FALSE) + theme_minimal()
+```
+

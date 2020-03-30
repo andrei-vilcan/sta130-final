@@ -63,13 +63,14 @@ targeted <- break_and_enters %>%
   group_by(targeted) %>% 
   filter(!is.na(occurrencemonth))
 
+targeted$occurrencemonth <- ordered(targeted$occurrencemonth, levels = month.name)
+
 ggplot(targeted, aes(x = occurrencemonth)) +
   geom_bar(colour = "black", fill = "blue", alpha = 0.2) +
   facet_wrap(~targeted) +
   xlab("Month") +
   ylab("Number of Occurrences") +
-  scale_x_discrete(label = month.name)
-  
+  scale_x_discrete(label = month.abb)
 ```
 
 One for occurence day:
@@ -91,14 +92,17 @@ targeted <- break_and_enters %>%
   group_by(targeted) %>% 
   filter(!is.na(occurrencedayofweek))
 
+day.abb <- c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 day.name <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+
+targeted$occurrencedayofweek <- ordered(targeted$occurrencedayofweek, levels = day.name)
 
 ggplot(targeted, aes(x = occurrencedayofweek)) +
   geom_bar(colour = "black", fill = "blue", alpha = 0.2) +
   facet_wrap(~targeted) +
   xlab("Day of the Week") +
   ylab("Number of Occurrences") +
-  scale_x_discrete(label = day.name)
+  scale_x_discrete(label = day.abb)
 ```
 
 And finally, occurence hour:
@@ -152,6 +156,7 @@ print(test_stat)
 
 Next we run a simulation by drawing random B&Es and looking at their month-on-month change trends. 
 ```{r}
+set.seed(123)
 repetitions <- 1000; # number of repetitions (i.e. possible groupings)
 simulated_values <- rep(NA, repetitions); # empty vector for sim. values
 
@@ -204,6 +209,7 @@ delta <- delta %>% filter(!is.na(delta))
 test_stat <- sum(delta)
 print(test_stat)
 
+set.seed(123)
 repetitions <- 1000; # number of repetitions (i.e. possible groupings)
 simulated_values <- rep(NA, repetitions); # empty vector for sim. values
 

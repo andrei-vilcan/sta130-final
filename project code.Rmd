@@ -80,7 +80,7 @@ Q3=quantile(prop, 0.75),
 max=max(prop))
 ```
 
----
+
 ## Data Summary Continued
 We were interested in the extremes of this data--in other words, neighborhoods that were high-risk and neighborhoods that were low-risk. This allows us look at data that is "extreme"--those with proportions <= the first quartile, and those >= the third (aka, the bottom 25% and the top 25% neighborhoods).
 
@@ -88,13 +88,21 @@ We were interested in the extremes of this data--in other words, neighborhoods t
 ## Statistical Methods
 
 Describe here what you have done to the data without presenting any results (output). If you want to indicate variables by symbols or variable names, define them here. 
-Subquestion 1: Hypothesis Test for Difference in Proportions and Linear Regression
-Subquestion 2:
-Subquestion 3: Bar Graph for Identifying Most Common Offence in High-Rate Neighborhoods, Hypothesis Test for Difference in Proportions, Multi-Linear Regression (?)
+\tiny 
+*Subquestion 1:* 
+
+* Hypothesis Test for Difference in Proportions and Linear Regression  
+
+*Subquestion 2:*  
+*Subquestion 3:* 
+
+* Bar Graph: By examining the data specifically for high-risk neighborhoods, we identify which offence type appears the most and hence occurs the most often. 
+
+* Hypothesis Test for Difference in Proportions: We randomly shuffled the values in the original data without replacement and got their distribution to see if the observed difference in proportion of B&E offences is "normal" under the assumption that there's no proportion difference between high-risk and low-risk neighborhoods. 
+
+* 
 
 ## Results--Subquestion 1:
-
-Upon initial observation, we noticed that the proportion of commercial break-ins in high-risk neighborhoods appeared much larger than commercial break-ins in low-risk neighborhoods. This was tested using a difference of proportions hypothesis test, using the following hypotheses: 
 
 \tiny Upon initial observation, we noticed that the proportion of commercial break-ins in high-risk neighborhoods appeared much larger than commercial break-ins in low-risk neighborhoods. This was tested using a difference of proportions hypothesis test, using the following hypotheses: 
 
@@ -160,9 +168,7 @@ Given the low p value of p < 0.0001, we can conclude that there is strong eviden
 
 This same question can be analyzed through a different lense: linear regression. For this method, a new variable **residential** was created that took the value *"Yes"* if the premise was a house or apartment, and *"No"* if it was anything else. 
 
-\tiny This same question can be analyzed through a different lense: linear regression. For this method, a new variable **residential** was created that took the value *"Yes"* if the premise was a house or apartment, and *"No"* if it was anything else. 
-
-The equation we are testing is $prop_i = \beta_0 + \beta_1 I(premise\ is\ residential) + \epsilon_i$. In other words, we are seeing if whether a property is residential makes it more vulnerable to break-ins (vulnerability approximated by **prop**)
+\tiny The equation we are testing is $prop_i = \beta_0 + \beta_1 I(premise\ is\ residential) + \epsilon_i$. In other words, we are seeing if whether a property is residential makes it more vulnerable to break-ins (vulnerability approximated by **prop**)
 We are interested in testing $H_0: \beta_1 = 0$ vs $H_A: \beta_1 \neq 0$
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=4, fig.height=1}
@@ -199,6 +205,199 @@ ratio_of_RMSEs = RMSE_traindata / RMSE_testdata)
 The Root Mean Squared Error measures prediction error for predictions from a linear regression model. Splitting the data up into testing (20%) and training (80%), we see that the RSME for both is around 0.006. Therefore, on average, predicted **vulnerabilities** (or proportions) are about 0.006 away from the true value in this data set restricted to high-risk neighborhoods. 
 
 The Root Mean Squared Error measures prediction error for predictions from a linear regression model. Splitting the data up into testing (20%) and training (80%), we see that the RSME for both is around 0.006. In other words, the prediction error for this model is 0.006. 
+
+
+## Results--Subquestion 2:
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=4, fig.height=1}
+# these lines are just some prerequisite variables referenced by Q2
+break_and_enters <- break_and_enters %>% filter(!is.na(Neighbourhood))
+neighbourhoods <- table(break_and_enters$Neighbourhood)
+neighbourhoods <- data.frame(neighbourhoods) 
+colnames(neighbourhoods) <- c("Neighbourhood", "Frequency")
+neighbourhoods <- neighbourhoods[order(neighbourhoods$Frequency, decreasing = TRUE),]  
+
+target_hoods <- head(neighbourhoods, 35)
+
+break_and_enters <- break_and_enters %>% 
+  mutate(targeted = ifelse(Neighbourhood %in% target_hoods$Neighbourhood, "Bottom 25%", "Top 75%"))
+
+top25 <- break_and_enters %>%
+  filter(Neighbourhood %in% target_hoods$Neighbourhood)
+
+bottom75 <- break_and_enters %>%
+  filter(!Neighbourhood %in% target_hoods$Neighbourhood)
+
+diff_factor = nrow(bottom75) / nrow(top25) 
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=2}
+targeted <- break_and_enters %>% 
+  group_by(targeted) %>% 
+  filter(!is.na(occurrenceyear))
+
+ggplot(targeted, aes(x = occurrenceyear)) +
+  geom_bar(colour = "black", fill = "blue", alpha = 0.2) +
+  facet_wrap(~targeted) +
+  xlab("Year") +
+  ylab("Occurrences")
+
+targeted <- break_and_enters %>% 
+  group_by(targeted) %>% 
+  filter(!is.na(occurrencemonth))
+
+targeted$occurrencemonth <- ordered(targeted$occurrencemonth, levels = month.name)
+
+ggplot(targeted, aes(x = occurrencemonth)) +
+  geom_bar(colour = "black", fill = "blue", alpha = 0.2) +
+  facet_wrap(~targeted) +
+  xlab("Month") +
+  ylab("Number of Occurrences") +
+  scale_x_discrete(label = month.abb)
+```
+
+## Results--Subquestion 2:
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=3}
+targeted <- break_and_enters %>% 
+  group_by(targeted) %>% 
+  filter(!is.na(occurrencedayofweek))
+
+day.abb <- c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+day.name <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+
+targeted$occurrencedayofweek <- ordered(targeted$occurrencedayofweek, levels = day.name)
+
+ggplot(targeted, aes(x = occurrencedayofweek)) +
+  geom_bar(colour = "black", fill = "blue", alpha = 0.2) +
+  facet_wrap(~targeted) +
+  xlab("Day of the Week") +
+  ylab("Number of Occurrences") +
+  scale_x_discrete(label = day.abb)
+
+targeted <- break_and_enters %>% 
+  group_by(targeted) %>% 
+  filter(!is.na(occurrencehour))
+
+ggplot(targeted, aes(x = occurrencehour)) +
+  geom_bar(colour = "black", fill = "blue", alpha = 0.2) +
+  facet_wrap(~targeted) +
+  xlab("Hour of the Day") +
+  ylab("Number of Occurrences")
+```
+
+## Subquestion 2--Are these trends any different?
+Are discreptencies in between trends in our two groups of neighbourhoods significant? Do our two groups have the same trends, or do the neighbourhoods with more frequent B&Es show different time trends?
+
+*hypothesis test*:  
+$H_0$: There is no difference in the patterns describing when B&Es occur in our worst-affected neighbourhoods.  
+$H_a$: The patterns describing when B&Es occur are different in our worst-affected neighbourhoods.  
+
+For the sake of simplicity, we will only analyze occurrence month and hour of day.
+
+## Subquestion 2--Occurrences by Month
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=3}
+table25 <- table(top25$occurrencemonth)
+table25 <- data.frame(table25)
+table25 <- table25[order(match(table25$Var1, month.name)), ] %>%
+  mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+
+table75 <- table(bottom75$occurrencemonth)
+table75 <- data.frame(table75)
+table75 <- table75[order(match(table75$Var1, month.name)), ] %>%
+  mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+
+delta <- abs(table75$change - table25$change)
+delta <- tibble(delta)
+delta <- delta %>% filter(!is.na(delta))
+
+test_stat <- sum(delta)
+
+set.seed(123)
+repetitions <- 1000; # number of repetitions (i.e. possible groupings)
+simulated_values <- rep(NA, repetitions); # empty vector for sim. values
+
+for(i in 1:repetitions){
+  
+  simdata <- sample_n(break_and_enters, 21142, replace = TRUE)
+  simdata <- table(simdata$occurrencemonth)
+  simdata <- data.frame(simdata)
+  simdata <- simdata[order(match(simdata$Var1, month.name)), ] %>%
+    mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+  
+  delta <- abs(table75$change - simdata$change)
+  delta <- tibble(delta)
+  delta <- delta %>% filter(!is.na(delta))
+  simulated_values[i] <- sum(delta)
+
+}
+
+simulated_values <- tibble(value = simulated_values)
+median <- median(simulated_values$value)
+  
+simulated_values %>% ggplot(aes(x=value)) +  
+  geom_histogram(colour = "black", fill = "grey") +  
+  geom_vline(xintercept = median  - abs(median - test_stat), color = "red") +  
+  geom_vline(xintercept = median + abs(median - test_stat), color = "blue") +
+  xlab("Differences in Monthly Change") +
+  ylab("Frequency")
+
+pvalue <- simulated_values %>%  
+  filter(abs(value - median) >= abs(test_stat - median)) %>%  
+  summarise(p_value = n() / repetitions)
+```
+With our test stat of 47.04 units of discreptency, we get a p-value of 0.236, suggesting no evidence against the null hypothesis. In other words, **monthly trends likely remain consistent in the most vulnerable neighbourhoods.**
+
+## Subquestion 2--Occurrences by Hour of Day
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=3}
+table25 <- table(top25$occurrencehour)
+table25 <- data.frame(table25)
+table25 <- table25[order(match(table25$Var1, month.name)), ] %>%
+  mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+
+table75 <- table(bottom75$occurrencehour)
+table75 <- data.frame(table75)
+table75 <- table75[order(match(table75$Var1, month.name)), ] %>%
+  mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+
+delta <- abs(table75$change - table25$change)
+delta <- tibble(delta)
+delta <- delta %>% filter(!is.na(delta))
+
+test_stat <- sum(delta)
+
+repetitions <- 1000; # number of repetitions (i.e. possible groupings)
+simulated_values <- rep(NA, repetitions); # empty vector for sim. values
+
+for(i in 1:repetitions){
+  
+  simdata <- sample_n(break_and_enters, 21142, replace = TRUE)
+  simdata <- table(simdata$occurrencehour)
+  simdata <- data.frame(simdata)
+  simdata <- simdata[order(match(simdata$Var1, month.name)), ] %>%
+    mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+  
+  delta <- abs(table75$change - simdata$change)
+  delta <- tibble(delta)
+  delta <- delta %>% filter(!is.na(delta))
+  simulated_values[i] <- sum(delta)
+
+}
+
+simulated_values <- tibble(value = simulated_values)
+median <- median(simulated_values$value)
+  
+simulated_values %>% ggplot(aes(x=value)) +  
+  geom_histogram(colour = "black", fill = "grey") +  
+  geom_vline(xintercept = median  - abs(median - test_stat), color = "red") +  
+  geom_vline(xintercept = median + abs(median - test_stat), color = "blue") +
+  xlab("Differences in Hourly Change") +
+  ylab("Frequency")
+
+pvalue <- simulated_values %>%  
+  filter(abs(value - median) >= abs(test_stat - median)) %>%  
+  summarise(p_value = n() / repetitions)
+```
+Again, with our test stat of 232.69 units of discreptency, we get a p-value of 0, suggesting strong evidence against the null hypothesis. In other words, **hourly trends in the most vulnerable neighbourhoods are very likely different in a significant way.**
 
 ## Results--Subquestion 3: 
 From the bar graph below, we can clearly identify that **B&E offences** occur the **most often** in high-risk neighborhoods.  
@@ -239,6 +438,8 @@ for(i in 1:repetitions3){
 sim_q3 <- tibble(prop_diff_q3 = simulated_differences_q3)
 ```
 
+\tiny Given this sampling distribution, we compare them with the test statistic, which is the proportion of B&E offences over the total number of offences as calculated from our sample data. We want to see if the test statistic is unusual under the null.
+
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=2.5}
 ggplot(sim_q3, aes(x=prop_diff_q3)) +
 geom_histogram(binwidth = 0.005, fill="gray", color="black") +
@@ -251,34 +452,44 @@ pval3 <- sim_q3 %>%
   filter(prop_diff_q3 >= abs(test_stat_q3) | prop_diff_q3 <= -abs(test_stat_q3))%>%
   summarise(pvalue3 = n() / repetitions)
 ```
+\tiny Thus, our observed value used for the test is very unusual compared to the simulated ones.  
+
+* Since the p-value is less than 0.0001, it means that there is a **low possibility** that there is data **as unusual as our observed value (test statistic)** under the null hypothesis.  
+
+* Therefore, we have **strong** evidence against the null that there is no difference in the proportion of B&E offences between high-risk and low-risk neighborhoods.
+
+
+## Results--Subquestion 3 Continued: 
 Next we will show how the proportion of type Break and Enters differs between high and low rate neighbourhoods on a plot: 
-```{r}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=2.5}
 ggplot(b_and_e_extremes, aes(x=level, y=prop)) +
   geom_boxplot() + theme_bw()
 ```
+
 It is evident that the proportions of break and enters in high-rate neighbourhoods have a much larger range than in low-rate neighbourhoods of this particular type of offence. 
 
-Further, we will use another method - a multilinear regresssion model to predict the proportion of Break and Enters using the offence types and level as predictors. The regression equation will be: 
+## Results--Subquestion 3 Continued: 
+\tiny Further, we will use another method - a multilinear regresssion model to predict the proportion of Break and Enters using the offence types and level as predictors. The regression equation will be: 
 y$_{i}$=$\beta _{0}$+$\beta _{1}$x$_{1i}$ +$\beta _{1}$x$_{2i}$
-where our response variable is y for the ith observation, x$_{1i}$ and x$_{2i}$ are the independent variables, $\beta B_{0}$ is the intercept parameter and $\beta B_{1}$ is the slope parameter.
+
+\tiny where our response variable is y for the ith observation, x$_{1i}$ and x$_{2i}$ are the independent variables, $\beta B_{0}$ is the intercept parameter and $\beta B_{1}$ is the slope parameter.
 We are interested to test the
 $H_0$: $P_\text{diff}$ = 0
 $H_a$: $P_\text{diff}$ != 0
 where $H_0$ represents the null hypothesis, $H_a$ the alternative hypothesis, and $P_\text{diff}$ is difference between the proportion of a certain offence type in B&E rated neighborhoods.
-```{r}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=4, fig.height=2.5}
 parallel_lines <- lm(prop ~ offence + level, data = b_and_e_extremes)
 summary(parallel_lines)$coefficients
-library(broom) 
-augment(parallel_lines)
-b_and_e_extremes %>% ggplot(aes(x=offence, y=prop, color=level))+geom_point(alpha=0.5) + geom_line(data=augment(parallel_lines), aes(y=.fitted, colour=level), lwd=1.5) 
 ```
-Based on the fitted regression model, the corresponding p-value test is very small (P = 0.0), so we have very strong evidence to reject the null hypothesis that there is no difference between  proportions of B&E offence types. So we can conclude that there is a difference of proportion between the level and B&E offence types. 
 
+## Results--Subquestion 3 Continued: 
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=2.5}
+library(broom) 
+# augment(parallel_lines)
+b_and_e_extremes %>% ggplot(aes(x=offence, y=prop, color=level))+geom_point(alpha=0.5) + geom_line(data=augment(parallel_lines), aes(y=.fitted, colour=level), lwd=1.5) + coord_flip()
+```
+\tiny Based on the fitted regression model, the corresponding p-value test is very small (P = 0.0), so we have very strong evidence to reject the null hypothesis that there is no difference between  proportions of B&E offence types. So we can conclude that there is a difference of proportion between the level and B&E offence types. 
 
-
-\tiny Our observed value used for the test is very unusual compared to the simulated ones.   
-- Since the p-value is less than 0.0001, it means that there is a **low possibility** that there is data **as unusual as our observed value (test statistic)** under the null hypothesis.  
-- Therefore, we have **strong** evidence against the null that there is no difference in the proportion of B&E offences between high-risk and low-risk neighborhoods.
 
 ## Conclusion
 
@@ -290,5 +501,3 @@ Here you can also mention any additional considerations, concerns, or issues you
 
 If you received any help from someone other than your team members you can acknowledge them. For example:   
 *The authors would like to thank "TA name" for helpful suggestions and comments that improved the presentation of this poster.*
-
-
