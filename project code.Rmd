@@ -87,14 +87,12 @@ We were interested in the extremes of this data--in other words, neighborhoods t
 
 ## Statistical Methods
 
-Describe here what you have done to the data without presenting any results (output). If you want to indicate variables by symbols or variable names, define them here. 
-Subquestion 1: Hypothesis Test for Difference in Proportions and Linear Regression
-Subquestion 2:
+Describe here what you have done to the data without presenting any results (output). If you want to indicate variables by symbols or variable names, define them here.   
+Subquestion 1: Hypothesis Test for Difference in Proportions and Linear Regression  
+Subquestion 2:  
 Subquestion 3: Bar Graph for Identifying Most Common Offence in High-Rate Neighborhoods, Hypothesis Test for Difference in Proportions, Multi-Linear Regression (?)
 
 ## Results--Subquestion 1:
-
-Upon initial observation, we noticed that the proportion of commercial break-ins in high-risk neighborhoods appeared much larger than commercial break-ins in low-risk neighborhoods. This was tested using a difference of proportions hypothesis test, using the following hypotheses: 
 
 \tiny Upon initial observation, we noticed that the proportion of commercial break-ins in high-risk neighborhoods appeared much larger than commercial break-ins in low-risk neighborhoods. This was tested using a difference of proportions hypothesis test, using the following hypotheses: 
 
@@ -158,11 +156,9 @@ Given the low p value of p < 0.0001, we can conclude that there is strong eviden
 
 ## Results--Subquestion 1 Continued: 
 
-This same question can be analyzed through a different lense: linear regression. For this method, a new variable **residential** was created that took the value *"Yes"* if the premise was a house or apartment, and *"No"* if it was anything else. 
+This same question can be analyzed through a different lense: linear regression. For this method, a new variable **residential** was created that took the value *"Yes"* if the premise was a house or apartment, and *"No"* if it was anything else.  
 
-\tiny This same question can be analyzed through a different lense: linear regression. For this method, a new variable **residential** was created that took the value *"Yes"* if the premise was a house or apartment, and *"No"* if it was anything else. 
-
-The equation we are testing is $prop_i = \beta_0 + \beta_1 I(premise\ is\ residential) + \epsilon_i$. In other words, we are seeing if whether a property is residential makes it more vulnerable to break-ins (vulnerability approximated by **prop**)
+\tiny The equation we are testing is $prop_i = \beta_0 + \beta_1 I(premise\ is\ residential) + \epsilon_i$. In other words, we are seeing if whether a property is residential makes it more vulnerable to break-ins (vulnerability approximated by **prop**)
 We are interested in testing $H_0: \beta_1 = 0$ vs $H_A: \beta_1 \neq 0$
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=4, fig.height=1}
@@ -246,11 +242,14 @@ labs(x = "Difference in proportion of B&E (offence) for high-risk versus
      low-risk neighborhoods")
 ```
 
+\tiny Given this sampling distribution, we compare them with the test statistic, which is the proportion of B&E offences over the total number of offences as calculated from our sample data. We want to see if the test statistic is unusual under the null.
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=0, fig.height=0}
 pval3 <- sim_q3 %>% 
   filter(prop_diff_q3 >= abs(test_stat_q3) | prop_diff_q3 <= -abs(test_stat_q3))%>%
   summarise(pvalue3 = n() / repetitions)
 ```
+
+## Results--Subquestion 3 Continued: 
 Next we will show how the proportion of type Break and Enters differs between high and low rate neighbourhoods on a plot: 
 ```{r}
 ggplot(b_and_e_extremes, aes(x=level, y=prop)) +
