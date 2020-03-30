@@ -119,6 +119,195 @@ All this being said, since all these trends are looking very similar for both gr
 Null Hypothesis: There is no difference in the patterns describing when B&Es occur in our worst-affected neighbourhoods.
 Alternative Hypothesis: The patterns describing when B&Es occur are different in our worst-affected neighbourhoods.
 
+We do this by calculating the absolute difference between the number of occurences per time period in our bottom 75% data and our top 25% sample. First let's create seperate dataframes for occurrence in the top 25% and bottom 75%.
+```{r}
+top25 <- break_and_enters %>%
+  filter(Neighbourhood %in% target_hoods$Neighbourhood)
+
+bottom75 <- break_and_enters %>%
+  filter(!Neighbourhood %in% target_hoods$Neighbourhood)
+
+diff_factor = nrow(bottom75) / nrow(top25) 
+```
+
+Then let's establish our test statistic. We are using the sum of the differences in month-on-month changes between our two groups of B&Es. The lower this number is, the lesser the differences are in changes between our two groups, and thus our trends must be similar. Conversely, the higher this number is, the more divergent our two trends are.
+```{r}
+table25 <- table(top25$occurrencemonth)
+table25 <- data.frame(table25)
+table25 <- table25[order(match(table25$Var1, month.name)), ] %>%
+  mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+
+table75 <- table(bottom75$occurrencemonth)
+table75 <- data.frame(table75)
+table75 <- table75[order(match(table75$Var1, month.name)), ] %>%
+  mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+
+delta <- abs(table75$change - table25$change)
+delta <- tibble(delta)
+delta <- delta %>% filter(!is.na(delta))
+
+test_stat <- sum(delta)
+print(test_stat)
+```
+
+Next we run a simulation by drawing random B&Es and looking at their month-on-month change trends. 
+```{r}
+repetitions <- 1000; # number of repetitions (i.e. possible groupings)
+simulated_values <- rep(NA, repetitions); # empty vector for sim. values
+
+for(i in 1:repetitions){
+  
+  simdata <- sample_n(break_and_enters, 21142, replace = TRUE)
+  simdata <- table(simdata$occurrencemonth)
+  simdata <- data.frame(simdata)
+  simdata <- simdata[order(match(simdata$Var1, month.name)), ] %>%
+    mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+  
+  delta <- abs(table75$change - simdata$change)
+  delta <- tibble(delta)
+  delta <- delta %>% filter(!is.na(delta))
+  simulated_values[i] <- sum(delta)
+
+}
+
+simulated_values <- tibble(value = simulated_values)
+median <- median(simulated_values$value)
+  
+simulated_values %>% ggplot(aes(x=value)) +  
+  geom_histogram(colour = "black", fill = "grey") +  
+  geom_vline(xintercept = median  - abs(median - test_stat), color = "red") +  
+  geom_vline(xintercept = median + abs(median - test_stat), color = "blue")
+
+pvalue <- simulated_values %>%  
+  filter(abs(value - median) >= abs(test_stat - median)) %>%  
+  summarise(p_value = n() / repetitions)
+print(pvalue)
+```
+We get a p-value of 0.022, suggesting moderate evidence against the null hypothesis. In other words, there is evidence to suggest that the monthly trend of B&Es differs between high-risk neighbourhoods and low-risk ones.
+
+Again, let's do the same but for occurrence hour.
+```{r}
+table25 <- table(top25$occurrencehour)
+table25 <- data.frame(table25)
+table25 <- table25[order(match(table25$Var1, month.name)), ] %>%
+  mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+
+table75 <- table(bottom75$occurrencehour)
+table75 <- data.frame(table75)
+table75 <- table75[order(match(table75$Var1, month.name)), ] %>%
+  mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+
+delta <- abs(table75$change - table25$change)
+delta <- tibble(delta)
+delta <- delta %>% filter(!is.na(delta))
+
+test_stat <- sum(delta)
+print(test_stat)
+
+repetitions <- 1000; # number of repetitions (i.e. possible groupings)
+simulated_values <- rep(NA, repetitions); # empty vector for sim. values
+
+for(i in 1:repetitions){
+  
+  simdata <- sample_n(break_and_enters, 21142, replace = TRUE)
+  simdata <- table(simdata$occurrencehour)
+  simdata <- data.frame(simdata)
+  simdata <- simdata[order(match(simdata$Var1, month.name)), ] %>%
+    mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+  
+  delta <- abs(table75$change - simdata$change)
+  delta <- tibble(delta)
+  delta <- delta %>% filter(!is.na(delta))
+  simulated_values[i] <- sum(delta)
+
+}
+
+simulated_values <- tibble(value = simulated_values)
+median <- median(simulated_values$value)
+  
+simulated_values %>% ggplot(aes(x=value)) +  
+  geom_histogram(colour = "black", fill = "grey") +  
+  geom_vline(xintercept = median  - abs(median - test_stat), color = "red") +  
+  geom_vline(xintercept = median + abs(median - test_stat), color = "blue")
+
+pvalue <- simulated_values %>%  
+  filter(abs(value - median) >= abs(test_stat - median)) %>%  
+  summarise(p_value = n() / repetitions)
+print(pvalue)
+```
+This time we get a p-value of 0, suggesting that there is very strong evidence against the null hypothesis. In other words.
+
+And one more time for day of the week.
+```{r}
+table25 <- table(top25$occurrencedayofweek)
+table25 <- data.frame(table25)
+table25 <- table25[order(match(table25$Var1, month.name)), ] %>%
+  mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+
+table75 <- table(bottom75$occurrencedayofweek)
+table75 <- data.frame(table75)
+table75 <- table75[order(match(table75$Var1, month.name)), ] %>%
+  mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+
+delta <- abs(table75$change - table25$change)
+delta <- tibble(delta)
+delta <- delta %>% filter(!is.na(delta))
+
+test_stat <- sum(delta)
+print(test_stat)
+
+repetitions <- 1000; # number of repetitions (i.e. possible groupings)
+simulated_values <- rep(NA, repetitions); # empty vector for sim. values
+
+for(i in 1:repetitions){
+  
+  simdata <- sample_n(break_and_enters, 21142, replace = TRUE)
+  simdata <- table(simdata$occurrencedayofweek)
+  simdata <- data.frame(simdata)
+  simdata <- simdata[order(match(simdata$Var1, month.name)), ] %>%
+    mutate(change = (Freq - lag(Freq)) / lag(Freq) * 100)
+  
+  delta <- abs(table75$change - simdata$change)
+  delta <- tibble(delta)
+  delta <- delta %>% filter(!is.na(delta))
+  simulated_values[i] <- sum(delta)
+
+}
+
+simulated_values <- tibble(value = simulated_values)
+median <- median(simulated_values$value)
+  
+simulated_values %>% ggplot(aes(x=value)) +  
+  geom_histogram(colour = "black", fill = "grey") +  
+  geom_vline(xintercept = median  - abs(median - test_stat), color = "red") +  
+  geom_vline(xintercept = median + abs(median - test_stat), color = "blue")
+
+pvalue <- simulated_values %>%  
+  filter(abs(value - median) >= abs(test_stat - median)) %>%  
+  summarise(p_value = n() / repetitions)
+print(pvalue)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
