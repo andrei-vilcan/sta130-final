@@ -279,13 +279,12 @@ ggplot(targeted, aes(x = occurrencehour)) +
 ```
 
 ## Subquestion 2--Are these trends any different?
-Are discreptencies in between trends in our two groups of neighbourhoods significant? Do our two groups have the same trends, or do the neighbourhoods with more frequent B&Es show different time trends?
+Do the highest-risk neighbourhoods have significantly different time trends?
 
-*Hypothesis Test*:  
 $H_0$: There is no difference in the patterns describing when B&Es occur in our worst-affected neighbourhoods.  
 $H_a$: The patterns describing when B&Es occur are different in our worst-affected neighbourhoods.  
 
-For the sake of simplicity, we will only analyze occurrence month and hour of day.
+As our test stat, we calculate the percentage change in B&Es by time period for both categories of neighbourhoods, and then find the sum of the differences in percentage change between the two. Then we can simulate to see if these values are unusual.
 
 ## Subquestion 2--Occurrences by Month
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=3}
